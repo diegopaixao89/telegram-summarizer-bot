@@ -194,6 +194,10 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Salva cada mensagem do grupo no banco de dados"""
     message = update.message
 
+    # Ignorar se não houver mensagem
+    if not message:
+        return
+
     # Ignorar mensagens de comandos
     if message.text and message.text.startswith('/'):
         return
