@@ -12,5 +12,8 @@ COPY . .
 # Criar diretório para banco de dados
 RUN mkdir -p /app/data
 
-# Comando para executar o bot
-CMD ["python", "bot.py"]
+# Expor porta para health check
+EXPOSE 8080
+
+# Comando para executar o bot com health check server
+CMD ["python", "main.py"]
