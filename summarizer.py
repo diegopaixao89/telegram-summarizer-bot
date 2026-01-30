@@ -61,7 +61,10 @@ Identifique insights importantes, frases marcantes, opiniões relevantes ou info
 compartilhadas na conversa. Seja específico e cite exemplos quando relevante.
 
 👥 MEMBROS MAIS ATIVOS
-Liste os 3-5 membros que mais contribuíram, mencionando brevemente o tipo de contribuição.
+Identifique os 3-5 membros do grupo que:
+- Mais enviaram mensagens (volume)
+- Mais participaram ativamente das discussões e pautas (engajamento e relevância)
+Liste o nome de cada membro e indique o tipo de participação (ex: "muito ativo nas discussões", "trouxe informações importantes", "engajou em vários tópicos").
 
 🔗 LINKS E RECURSOS RELEVANTES
 Liste APENAS os links mais importantes e relevantes compartilhados, com breve descrição.
@@ -181,7 +184,7 @@ Liste os 5 tópicos com maior engajamento:
 Principais insights, informações valiosas ou frases marcantes.
 
 👥 MEMBROS MAIS ATIVOS
-Top 3-5 membros e tipo de contribuição.
+Liste os 3-5 membros que mais falaram e participaram das pautas/discussões, indicando o tipo de participação de cada um.
 
 🔗 LINKS RELEVANTES
 Apenas links importantes com descrição.
