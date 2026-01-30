@@ -68,8 +68,8 @@ Se não houver, escreva "Nenhuma decisão formal foi tomada."
 Liste perguntas importantes que ficaram sem resposta ou dúvidas não resolvidas.
 Se não houver, escreva "Todas as perguntas foram respondidas."
 
-👥 PARTICIPANTES MAIS ATIVOS
-Liste os 3-5 participantes que mais contribuíram, mencionando brevemente o tipo de contribuição.
+👥 MEMBROS MAIS ATIVOS
+Liste os 3-5 membros que mais contribuíram, mencionando brevemente o tipo de contribuição.
 
 🔗 LINKS E RECURSOS RELEVANTES
 Liste APENAS os links mais importantes e relevantes compartilhados, com breve descrição.
@@ -170,11 +170,11 @@ Seja conciso mas completo."""
         # Resumo final consolidado
         combined = "\n\n".join(chunk_summaries)
 
-        final_prompt = f"""Com base nos seguintes resumos de blocos de mensagens, crie um RESUMO FINAL ELABORADO seguindo esta estrutura:
+        final_prompt = f"""Com base nos seguintes resumos de blocos de mensagens, forneça um resumo completo seguindo esta estrutura:
 
 {combined}
 
-Forneça um resumo COMPLETO e ELABORADO com:
+Estrutura do resumo:
 
 📋 RESUMO EXECUTIVO
 Parágrafo bem elaborado (5-7 linhas) sintetizando toda a conversa.
@@ -194,8 +194,8 @@ Decisões tomadas ou acordos firmados.
 ❓ PERGUNTAS EM ABERTO
 Dúvidas não resolvidas.
 
-👥 PARTICIPANTES MAIS ATIVOS
-Top 3-5 participantes e tipo de contribuição.
+👥 MEMBROS MAIS ATIVOS
+Top 3-5 membros e tipo de contribuição.
 
 🔗 LINKS RELEVANTES
 Apenas links importantes com descrição.
