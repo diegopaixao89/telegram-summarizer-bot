@@ -60,14 +60,6 @@ Liste os 5 tópicos que mais geraram engajamento e discussão, ordenados por rel
 Identifique insights importantes, frases marcantes, opiniões relevantes ou informações valiosas
 compartilhadas na conversa. Seja específico e cite exemplos quando relevante.
 
-✅ DECISÕES E ACORDOS
-Liste decisões tomadas, acordos firmados ou ações definidas durante a conversa.
-Se não houver, escreva "Nenhuma decisão formal foi tomada."
-
-❓ PERGUNTAS E DÚVIDAS EM ABERTO
-Liste perguntas importantes que ficaram sem resposta ou dúvidas não resolvidas.
-Se não houver, escreva "Todas as perguntas foram respondidas."
-
 👥 MEMBROS MAIS ATIVOS
 Liste os 3-5 membros que mais contribuíram, mencionando brevemente o tipo de contribuição.
 
@@ -187,12 +179,6 @@ Liste os 5 tópicos com maior engajamento:
 
 💡 INSIGHTS E DESTAQUES
 Principais insights, informações valiosas ou frases marcantes.
-
-✅ DECISÕES E ACORDOS
-Decisões tomadas ou acordos firmados.
-
-❓ PERGUNTAS EM ABERTO
-Dúvidas não resolvidas.
 
 👥 MEMBROS MAIS ATIVOS
 Top 3-5 membros e tipo de contribuição.
