@@ -6,7 +6,7 @@ import asyncio
 import logging
 from aiohttp import web
 from telegram.ext import Application
-from bot import start, stats, resumo, resumo_hoje, resumo_personalizado, resumo_rapido, save_message, post_init
+from bot import start, stats, resumo, resumo_hoje, resumo_personalizado, resumo_rapido, save_message, post_init, db
 from telegram.ext import CommandHandler, MessageHandler, filters
 from telegram import Update
 import config
@@ -39,6 +39,12 @@ async def start_health_server():
 
 async def start_bot():
     """Start Telegram bot"""
+    # Initialize database BEFORE starting the bot
+    logger.info("Initializing database...")
+    os.makedirs('./data', exist_ok=True)
+    await db.initialize()
+    logger.info("Database initialized successfully!")
+
     application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
 
     # Register handlers
