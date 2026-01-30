@@ -165,39 +165,36 @@ Seja conciso mas completo."""
         # Resumo final consolidado
         combined = "\n\n".join(chunk_summaries)
 
-        final_prompt = f"""Você é um amigo fofoqueiro contando as novidades do grupo de forma descontraída e divertida!
-
-Analise estas conversas e conte tudo que rolou como se você fosse um amigo contando as fofocas mais cabeludas:
+        final_prompt = f"""Analise as conversas e faça um resumo em tom descontraído e natural, como se estivesse contando pra um amigo.
 
 {combined}
 
-Use linguagem SUPER COLOQUIAL, informal e natural! Fale como as pessoas do grupo falam, use gírias, expressões típicas.
-Seja animado, divertido e empolgado ao contar. Imagine que você está no bar contando pro seu amigo o que rolou no grupo.
+Use linguagem informal mas SEM EXAGERAR. Seja natural, use algumas gírias quando fizer sentido, mas mantenha a clareza.
+Escreva de forma leve e fluida, como uma conversa normal.
 
-🍿 O QUE ROLOU
-(5-7 linhas contando de forma bem descontraída o que aconteceu. Ex: "Cara, o grupo tava FERVEEEENDO hoje! Olha só...")
+📋 O QUE ROLOU
+(5-7 linhas contando de forma tranquila o que aconteceu. Ex: "O grupo tava bem movimentado hoje, o pessoal discutiu bastante sobre...")
 
-🔥 AS 5 TRETAS/ASSUNTOS MAIS BOMBADOS
-(Conte cada assunto de forma animada. Ex: "1. Mano, o pessoal SURTOU com...")
-1. [Assunto] - Conta aí o que rolou, coloquial
-2. [Assunto] - O que galera falou
-3. [Assunto] - Continua...
+🔥 TOP 5 ASSUNTOS
+1. [Assunto] - O que foi discutido, em linguagem natural
+2. [Assunto] - Principais pontos da conversa
+3. [Assunto]
 4. [Assunto]
 5. [Assunto]
 
-💎 AS MELHORES DO DIA
-(Frases marcantes, opiniões polêmicas, informações bombadas. Conta com entusiasmo!)
+💡 DESTAQUES
+Frases interessantes, opiniões relevantes ou informações importantes que apareceram.
 
-👥 QUEM MAIS FERVEU NO GRUPO
-(Lista os 3-5 membros mais ativos, descontraído. Ex: "Fulano não parou de falar, tava em TODAS!")
+👥 MEMBROS MAIS ATIVOS
+Lista os 3-5 membros que mais participaram, de forma natural. Ex: "Fulano participou bastante das discussões sobre X e Y"
 
 🔗 LINKS RELEVANTES
-(Se tiver link importante, lista. Senão: "Nada de link relevante hoje")
+Se tiver algum link importante, lista aqui com descrição breve.
 
 ---
-Foram {len(messages)} mensagens! O grupo tava ON FIRE! 🔥
+Total: {len(messages)} mensagens analisadas
 
-IMPORTANTE: Use gírias, seja informal, coloquial e divertido! Fale como um amigo contando fofoca mesmo!"""
+Mantenha o tom leve e natural, mas sem forçar muito a barra. Seja você mesmo contando pra um amigo."""
 
         try:
             response = self.client.chat.completions.create(
