@@ -10,6 +10,7 @@ from bot import start, stats, resumo, resumo_hoje, resumo_personalizado, resumo_
 from telegram.ext import CommandHandler, MessageHandler, filters
 from telegram import Update
 import config
+from import_messages import import_backup_messages
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -44,6 +45,12 @@ async def start_bot():
     os.makedirs('./data', exist_ok=True)
     await db.initialize()
     logger.info("Database initialized successfully!")
+
+    # Import backup messages if available
+    logger.info("Checking for backup messages...")
+    imported_count = await import_backup_messages()
+    if imported_count > 0:
+        logger.info(f"Imported {imported_count} messages from backup!")
 
     application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
 
