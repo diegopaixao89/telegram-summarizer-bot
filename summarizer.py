@@ -29,6 +29,10 @@ class Summarizer:
         if not messages:
             return "Nenhuma mensagem para resumir."
 
+        # Se tem muitas mensagens, divide em blocos
+        if len(messages) > 800:
+            return await self._summarize_in_chunks(messages)
+
         formatted_messages = self._format_messages(messages)
 
         prompt = f"""Você é um assistente especializado em resumir conversas de grupos do Telegram de forma profissional e detalhada.
@@ -127,3 +131,86 @@ Foque apenas nos pontos mais importantes."""
         except Exception as e:
             logger.error(f"Erro ao gerar resumo rápido: {e}")
             return f"❌ Erro: {str(e)}"
+
+    async def _summarize_in_chunks(self, messages: List[Dict]) -> str:
+        """Resume mensagens em blocos para evitar limite de tokens"""
+        chunk_size = 400  # Mensagens por bloco
+        chunks = [messages[i:i + chunk_size] for i in range(0, len(messages), chunk_size)]
+
+        logger.info(f"Dividindo {len(messages)} mensagens em {len(chunks)} blocos")
+
+        # Resumir cada bloco
+        chunk_summaries = []
+        for i, chunk in enumerate(chunks, 1):
+            formatted = self._format_messages(chunk)
+
+            prompt = f"""Resuma este bloco de {len(chunk)} mensagens de grupo, focando em:
+- Principais tópicos discutidos
+- Pontos importantes
+- Decisões ou acordos
+
+MENSAGENS:
+{formatted}
+
+Seja conciso mas completo."""
+
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.3,
+                    max_tokens=800
+                )
+                chunk_summaries.append(f"**Bloco {i}:** {response.choices[0].message.content}")
+                logger.info(f"Bloco {i}/{len(chunks)} resumido")
+            except Exception as e:
+                logger.error(f"Erro ao resumir bloco {i}: {e}")
+                chunk_summaries.append(f"**Bloco {i}:** Erro ao processar")
+
+        # Resumo final consolidado
+        combined = "\n\n".join(chunk_summaries)
+
+        final_prompt = f"""Com base nos seguintes resumos de blocos de mensagens, crie um RESUMO FINAL ELABORADO seguindo esta estrutura:
+
+{combined}
+
+Forneça um resumo COMPLETO e ELABORADO com:
+
+📋 RESUMO EXECUTIVO
+Parágrafo bem elaborado (5-7 linhas) sintetizando toda a conversa.
+
+🔥 TOP 5 ASSUNTOS MAIS DISCUTIDOS
+Liste os 5 tópicos com maior engajamento:
+1. [Assunto] - Contexto e pontos principais
+2. [Assunto] - Contexto e pontos principais
+(continue...)
+
+💡 INSIGHTS E DESTAQUES
+Principais insights, informações valiosas ou frases marcantes.
+
+✅ DECISÕES E ACORDOS
+Decisões tomadas ou acordos firmados.
+
+❓ PERGUNTAS EM ABERTO
+Dúvidas não resolvidas.
+
+👥 PARTICIPANTES MAIS ATIVOS
+Top 3-5 participantes e tipo de contribuição.
+
+🔗 LINKS RELEVANTES
+Apenas links importantes com descrição.
+
+Total de mensagens analisadas: {len(messages)}"""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": final_prompt}],
+                temperature=0.4,
+                max_tokens=3500
+            )
+            logger.info(f"Resumo final gerado para {len(messages)} mensagens")
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Erro ao gerar resumo final: {e}")
+            return f"❌ Erro ao gerar resumo final: {str(e)}\n\nResumos parciais:\n{combined}"
