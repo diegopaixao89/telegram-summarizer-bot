@@ -24,6 +24,39 @@ class Summarizer:
 
         return "\n".join(formatted)
 
+    def _get_top_users_with_context(self, messages: List[Dict], top_n: int = 5) -> str:
+        """Agrupa mensagens por usuário e retorna TOP N com contexto"""
+        user_messages = {}
+
+        for msg in messages:
+            username = msg.get('username')
+            first_name = msg.get('first_name') or 'Usuário'
+            text = msg.get('text', '')
+
+            if not text:
+                continue
+
+            # Usar username com @ se disponível, senão usar first_name
+            user_key = f"@{username}" if username else first_name
+
+            if user_key not in user_messages:
+                user_messages[user_key] = []
+            user_messages[user_key].append(text)
+
+        # Ordenar por número de mensagens
+        sorted_users = sorted(user_messages.items(), key=lambda x: len(x[1]), reverse=True)[:top_n]
+
+        # Formatar para o prompt
+        result = []
+        for i, (user, msgs) in enumerate(sorted_users, 1):
+            msg_count = len(msgs)
+            # Pegar uma amostra das mensagens do usuário (max 10 para não sobrecarregar)
+            sample_msgs = msgs[:10] if len(msgs) > 10 else msgs
+            msgs_text = " | ".join(sample_msgs)
+            result.append(f"{i}. {user} ({msg_count} msgs): {msgs_text[:300]}...")
+
+        return "\n".join(result)
+
     async def summarize(self, messages: List[Dict]) -> str:
         """Gera resumo das mensagens usando Groq"""
         if not messages:
@@ -34,6 +67,7 @@ class Summarizer:
             return await self._summarize_in_chunks(messages)
 
         formatted_messages = self._format_messages(messages)
+        top_users_context = self._get_top_users_with_context(messages, top_n=5)
 
         prompt = f"""Você é um assistente especializado em resumir conversas de grupos do Telegram de forma profissional e detalhada.
 
@@ -41,6 +75,9 @@ Analise as seguintes {len(messages)} mensagens e forneça um resumo estruturado 
 
 MENSAGENS:
 {formatted_messages}
+
+TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
+{top_users_context}
 
 Por favor, forneça um resumo ELABORADO seguindo EXATAMENTE esta estrutura:
 
@@ -60,11 +97,19 @@ Liste os 5 tópicos que mais geraram engajamento e discussão, ordenados por rel
 Identifique insights importantes, frases marcantes, opiniões relevantes ou informações valiosas
 compartilhadas na conversa. Seja específico e cite exemplos quando relevante.
 
-👥 MEMBROS MAIS ATIVOS
-Identifique os 3-5 membros do grupo que:
-- Mais enviaram mensagens (volume)
-- Mais participaram ativamente das discussões e pautas (engajamento e relevância)
-Liste o nome de cada membro e indique o tipo de participação (ex: "muito ativo nas discussões", "trouxe informações importantes", "engajou em vários tópicos").
+👥 TOP 5 MEMBROS MAIS ATIVOS
+IMPORTANTE: Use EXATAMENTE este formato para cada membro:
+1. @username (X msgs) - Frase resumindo sobre o que ele/ela falou
+2. @username (X msgs) - Frase resumindo sobre o que ele/ela falou
+3. @username (X msgs) - Frase resumindo sobre o que ele/ela falou
+4. @username (X msgs) - Frase resumindo sobre o que ele/ela falou
+5. @username (X msgs) - Frase resumindo sobre o que ele/ela falou
+
+Exemplo:
+1. @joao (45 msgs) - Discutindo sobre prazos do projeto e organização da sprint
+2. @maria (32 msgs) - Compartilhando memes e links sobre tecnologia
+
+Para cada membro, analise suas mensagens e crie UMA FRASE (máx 15 palavras) que resuma os principais tópicos que ele discutiu.
 
 🔗 LINKS E RECURSOS RELEVANTES
 Liste APENAS os links mais importantes e relevantes compartilhados, com breve descrição.
@@ -164,10 +209,14 @@ Seja conciso mas completo."""
 
         # Resumo final consolidado
         combined = "\n\n".join(chunk_summaries)
+        top_users_context = self._get_top_users_with_context(messages, top_n=5)
 
         final_prompt = f"""Analise as conversas e faça um resumo em tom descontraído e natural, como se estivesse contando pra um amigo.
 
 {combined}
+
+TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
+{top_users_context}
 
 Use linguagem informal mas SEM EXAGERAR. Seja natural, use algumas gírias quando fizer sentido, mas mantenha a clareza.
 Escreva de forma leve e fluida, como uma conversa normal.
@@ -185,8 +234,17 @@ Escreva de forma leve e fluida, como uma conversa normal.
 💡 DESTAQUES
 Frases interessantes, opiniões relevantes ou informações importantes que apareceram.
 
-👥 MEMBROS MAIS ATIVOS
-Lista os 3-5 membros que mais participaram, de forma natural. Ex: "Fulano participou bastante das discussões sobre X e Y"
+👥 TOP 5 MEMBROS MAIS ATIVOS
+IMPORTANTE: Use EXATAMENTE este formato:
+1. @username (X msgs) - Frase resumindo sobre o que falou
+2. @username (X msgs) - Frase resumindo sobre o que falou
+3. @username (X msgs) - Frase resumindo sobre o que falou
+4. @username (X msgs) - Frase resumindo sobre o que falou
+5. @username (X msgs) - Frase resumindo sobre o que falou
+
+Exemplo:
+1. @joao (45 msgs) - Falando sobre prazos e organização do projeto
+2. @maria (32 msgs) - Compartilhando memes e links sobre tecnologia
 
 🔗 LINKS RELEVANTES
 Se tiver algum link importante, lista aqui com descrição breve.
