@@ -61,7 +61,8 @@ async def start_bot():
     application.add_handler(CommandHandler("resumo_hoje", resumo_hoje))
     application.add_handler(CommandHandler("resumo_personalizado", resumo_personalizado))
     application.add_handler(CommandHandler("resumo_rapido", resumo_rapido))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_message))
+    # Handler para TODAS as mensagens (texto, foto, vídeo, etc), exceto comandos
+    application.add_handler(MessageHandler(~filters.COMMAND, save_message))
 
     logger.info("Starting Telegram bot...")
     await application.initialize()

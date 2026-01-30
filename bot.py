@@ -12,6 +12,7 @@ from telegram.ext import (
 import config
 from database import Database
 from summarizer import Summarizer
+from media_processor import MediaProcessor
 
 # Configurar logging
 logging.basicConfig(
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 # Inicializar componentes
 db = Database()
 summarizer = Summarizer()
+media_processor = MediaProcessor()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -191,7 +193,7 @@ async def resumo_rapido(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Salva cada mensagem do grupo no banco de dados"""
+    """Salva cada mensagem do grupo no banco de dados, incluindo mídia"""
     message = update.message
 
     # Ignorar se não houver mensagem
@@ -202,8 +204,64 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message.text and message.text.startswith('/'):
         return
 
-    # Ignorar mensagens sem texto
-    if not message.text:
+    # Processar texto da mensagem
+    message_text = None
+
+    # 1. Mensagens com texto
+    if message.text:
+        message_text = message.text
+        # Enriquecer com informações de links
+        message_text = await media_processor.enrich_message_text(message_text)
+
+    # 2. Mensagens com foto
+    elif message.photo:
+        try:
+            # Pegar a foto de maior resolução
+            photo = message.photo[-1]
+            photo_file = await context.bot.get_file(photo.file_id)
+            photo_bytes = await photo_file.download_as_bytearray()
+
+            # Processar imagem
+            caption = message.caption or ""
+            photo_description = await media_processor.process_photo(bytes(photo_bytes), caption)
+            message_text = photo_description
+
+        except Exception as e:
+            logger.error(f"Erro ao processar foto: {e}")
+            message_text = "📷 [Imagem]"
+
+    # 3. Mensagens com link (mas sem texto)
+    elif message.caption:
+        message_text = message.caption
+        message_text = await media_processor.enrich_message_text(message_text)
+
+    # 4. Outros tipos de mídia
+    elif message.document:
+        file_name = message.document.file_name if message.document.file_name else "arquivo"
+        caption = message.caption or ""
+        message_text = f"📄 [Documento: {file_name}]"
+        if caption:
+            message_text += f" {caption}"
+
+    elif message.video:
+        caption = message.caption or ""
+        message_text = f"🎥 [Vídeo]"
+        if caption:
+            message_text += f" {caption}"
+
+    elif message.voice:
+        message_text = "🎤 [Mensagem de voz]"
+
+    elif message.audio:
+        title = message.audio.title or "áudio"
+        message_text = f"🎵 [Áudio: {title}]"
+
+    elif message.sticker:
+        emoji = message.sticker.emoji or ""
+        message_text = f"🎭 [Sticker {emoji}]"
+
+    # Ignorar se não conseguiu extrair nada
+    if not message_text:
         return
 
     message_data = {
@@ -212,7 +270,7 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'user_id': message.from_user.id if message.from_user else None,
         'username': message.from_user.username if message.from_user else None,
         'first_name': message.from_user.first_name if message.from_user else None,
-        'text': message.text,
+        'text': message_text,
         'timestamp': message.date.isoformat() if message.date else datetime.now().isoformat()
     }
 
