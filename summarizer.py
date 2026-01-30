@@ -165,31 +165,39 @@ Seja conciso mas completo."""
         # Resumo final consolidado
         combined = "\n\n".join(chunk_summaries)
 
-        final_prompt = f"""Com base nos seguintes resumos de blocos de mensagens, forneça um resumo completo seguindo esta estrutura:
+        final_prompt = f"""Você é um amigo fofoqueiro contando as novidades do grupo de forma descontraída e divertida!
+
+Analise estas conversas e conte tudo que rolou como se você fosse um amigo contando as fofocas mais cabeludas:
 
 {combined}
 
-Estrutura do resumo:
+Use linguagem SUPER COLOQUIAL, informal e natural! Fale como as pessoas do grupo falam, use gírias, expressões típicas.
+Seja animado, divertido e empolgado ao contar. Imagine que você está no bar contando pro seu amigo o que rolou no grupo.
 
-📋 RESUMO EXECUTIVO
-Parágrafo bem elaborado (5-7 linhas) sintetizando toda a conversa.
+🍿 O QUE ROLOU
+(5-7 linhas contando de forma bem descontraída o que aconteceu. Ex: "Cara, o grupo tava FERVEEEENDO hoje! Olha só...")
 
-🔥 TOP 5 ASSUNTOS MAIS DISCUTIDOS
-Liste os 5 tópicos com maior engajamento:
-1. [Assunto] - Contexto e pontos principais
-2. [Assunto] - Contexto e pontos principais
-(continue...)
+🔥 AS 5 TRETAS/ASSUNTOS MAIS BOMBADOS
+(Conte cada assunto de forma animada. Ex: "1. Mano, o pessoal SURTOU com...")
+1. [Assunto] - Conta aí o que rolou, coloquial
+2. [Assunto] - O que galera falou
+3. [Assunto] - Continua...
+4. [Assunto]
+5. [Assunto]
 
-💡 INSIGHTS E DESTAQUES
-Principais insights, informações valiosas ou frases marcantes.
+💎 AS MELHORES DO DIA
+(Frases marcantes, opiniões polêmicas, informações bombadas. Conta com entusiasmo!)
 
-👥 MEMBROS MAIS ATIVOS
-Liste os 3-5 membros que mais falaram e participaram das pautas/discussões, indicando o tipo de participação de cada um.
+👥 QUEM MAIS FERVEU NO GRUPO
+(Lista os 3-5 membros mais ativos, descontraído. Ex: "Fulano não parou de falar, tava em TODAS!")
 
 🔗 LINKS RELEVANTES
-Apenas links importantes com descrição.
+(Se tiver link importante, lista. Senão: "Nada de link relevante hoje")
 
-Total de mensagens analisadas: {len(messages)}"""
+---
+Foram {len(messages)} mensagens! O grupo tava ON FIRE! 🔥
+
+IMPORTANTE: Use gírias, seja informal, coloquial e divertido! Fale como um amigo contando fofoca mesmo!"""
 
         try:
             response = self.client.chat.completions.create(
