@@ -88,7 +88,7 @@ Seja detalhado, elaborado e profissional. Use linguagem clara e bem estruturada.
                     }
                 ],
                 temperature=0.4,
-                max_tokens=3500
+                max_tokens=4500
             )
 
             summary = response.choices[0].message.content

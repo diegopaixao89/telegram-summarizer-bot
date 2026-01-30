@@ -55,16 +55,16 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def resumo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Gera resumo das últimas 300 mensagens"""
+    """Gera resumo das últimas 2000 mensagens"""
     chat_id = update.effective_chat.id
 
     # Enviar mensagem de processamento
     processing_msg = await update.message.reply_text(
-        "⏳ Analisando as últimas 300 mensagens... Por favor, aguarde."
+        "⏳ Analisando as últimas 2000 mensagens... Isso pode levar até 2 minutos. Por favor, aguarde."
     )
 
     try:
-        messages = await db.get_last_n_messages(chat_id, 300)
+        messages = await db.get_last_n_messages(chat_id, 2000)
 
         if not messages:
             await processing_msg.edit_text(
@@ -162,15 +162,15 @@ async def resumo_personalizado(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def resumo_rapido(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Gera resumo rápido das últimas 150 mensagens"""
+    """Gera resumo rápido das últimas 500 mensagens"""
     chat_id = update.effective_chat.id
 
     processing_msg = await update.message.reply_text(
-        "⚡ Gerando resumo rápido das últimas 150 mensagens..."
+        "⚡ Gerando resumo rápido das últimas 500 mensagens..."
     )
 
     try:
-        messages = await db.get_last_n_messages(chat_id, 150)
+        messages = await db.get_last_n_messages(chat_id, 500)
 
         if not messages:
             await processing_msg.edit_text(
