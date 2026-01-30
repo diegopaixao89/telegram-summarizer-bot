@@ -31,34 +31,48 @@ class Summarizer:
 
         formatted_messages = self._format_messages(messages)
 
-        prompt = f"""Você é um assistente especializado em resumir conversas de grupos do Telegram.
+        prompt = f"""Você é um assistente especializado em resumir conversas de grupos do Telegram de forma profissional e detalhada.
 
-Analise as seguintes {len(messages)} mensagens e forneça um resumo estruturado:
+Analise as seguintes {len(messages)} mensagens e forneça um resumo estruturado e elaborado:
 
 MENSAGENS:
 {formatted_messages}
 
-Por favor, forneça:
+Por favor, forneça um resumo ELABORADO seguindo EXATAMENTE esta estrutura:
 
 📋 RESUMO EXECUTIVO
-(3-5 linhas resumindo o conteúdo geral)
+Escreva um parágrafo bem elaborado (5-7 linhas) que sintetize o contexto geral da conversa,
+destacando o clima, principais discussões e conclusões gerais. Seja descritivo e contextual.
 
-💬 PRINCIPAIS TÓPICOS
-(Liste os tópicos mais discutidos)
+🔥 TOP 5 ASSUNTOS MAIS DISCUTIDOS
+Liste os 5 tópicos que mais geraram engajamento e discussão, ordenados por relevância:
+1. [Assunto mais falado] - Breve contexto e principais pontos discutidos
+2. [Segundo assunto] - Contexto e pontos principais
+3. [Terceiro assunto] - Contexto e pontos principais
+4. [Quarto assunto] - Contexto e pontos principais
+5. [Quinto assunto] - Contexto e pontos principais
+
+💡 INSIGHTS E DESTAQUES
+Identifique insights importantes, frases marcantes, opiniões relevantes ou informações valiosas
+compartilhadas na conversa. Seja específico e cite exemplos quando relevante.
 
 ✅ DECISÕES E ACORDOS
-(Se houver decisões ou acordos importantes)
+Liste decisões tomadas, acordos firmados ou ações definidas durante a conversa.
+Se não houver, escreva "Nenhuma decisão formal foi tomada."
 
-❓ PERGUNTAS SEM RESPOSTA
-(Perguntas que ficaram sem resposta clara)
-
-🔗 LINKS E RECURSOS
-(URLs ou recursos importantes compartilhados)
+❓ PERGUNTAS E DÚVIDAS EM ABERTO
+Liste perguntas importantes que ficaram sem resposta ou dúvidas não resolvidas.
+Se não houver, escreva "Todas as perguntas foram respondidas."
 
 👥 PARTICIPANTES MAIS ATIVOS
-(Quem mais contribuiu na conversa)
+Liste os 3-5 participantes que mais contribuíram, mencionando brevemente o tipo de contribuição.
 
-Mantenha o resumo conciso, objetivo e em português."""
+🔗 LINKS E RECURSOS RELEVANTES
+Liste APENAS os links mais importantes e relevantes compartilhados, com breve descrição.
+Inclua somente links que agregam valor real à discussão.
+Se não houver links relevantes, escreva "Nenhum link relevante foi compartilhado."
+
+Seja detalhado, elaborado e profissional. Use linguagem clara e bem estruturada."""
 
         try:
             response = self.client.chat.completions.create(
@@ -73,8 +87,8 @@ Mantenha o resumo conciso, objetivo e em português."""
                         "content": prompt
                     }
                 ],
-                temperature=0.3,
-                max_tokens=2000
+                temperature=0.4,
+                max_tokens=3500
             )
 
             summary = response.choices[0].message.content
