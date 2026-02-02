@@ -56,6 +56,27 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def debug(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Mostra status da configuração do bot"""
+    import os
+
+    gemini_configured = "✅ CONFIGURADA" if os.getenv("GEMINI_API_KEY") else "❌ NÃO CONFIGURADA"
+    groq_configured = "✅ CONFIGURADA" if os.getenv("GROQ_API_KEY") else "❌ NÃO CONFIGURADA"
+
+    # Verificar se o Gemini model está inicializado
+    from bot import summarizer
+    gemini_active = "✅ ATIVO" if summarizer.gemini_model else "❌ INATIVO"
+
+    await update.message.reply_text(
+        f"🔧 DEBUG - Status da Configuração\n\n"
+        f"GEMINI_API_KEY: {gemini_configured}\n"
+        f"GROQ_API_KEY: {groq_configured}\n"
+        f"Gemini Model: {gemini_active}\n\n"
+        f"Se Gemini está CONFIGURADA mas INATIVO,\n"
+        f"verifique os logs de startup do Koyeb!"
+    )
+
+
 async def resumo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gera resumo das últimas 2000 mensagens"""
     chat_id = update.effective_chat.id
@@ -308,6 +329,7 @@ def main():
     # Registrar handlers de comandos
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("stats", stats))
+    application.add_handler(CommandHandler("debug", debug))
     application.add_handler(CommandHandler("resumo", resumo))
     application.add_handler(CommandHandler("resumo_hoje", resumo_hoje))
     application.add_handler(CommandHandler("resumo_personalizado", resumo_personalizado))
