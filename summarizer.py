@@ -2,6 +2,7 @@ import logging
 from typing import List, Dict
 from groq import Groq
 import config
+from context_enricher import ContextEnricher
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +11,7 @@ class Summarizer:
     def __init__(self):
         self.client = Groq(api_key=config.GROQ_API_KEY)
         self.model = "llama-3.3-70b-versatile"  # Modelo rápido e gratuito
+        self.context_enricher = ContextEnricher()
 
     def _format_messages(self, messages: List[Dict]) -> str:
         """Formata mensagens para o prompt"""
@@ -66,6 +68,9 @@ class Summarizer:
         if len(messages) > 800:
             return await self._summarize_in_chunks(messages)
 
+        # Enriquecer contexto cultural
+        cultural_context = await self.context_enricher.enrich_context(messages, max_searches=5)
+
         formatted_messages = self._format_messages(messages)
         top_users_context = self._get_top_users_with_context(messages, top_n=5)
 
@@ -78,7 +83,7 @@ MENSAGENS:
 
 TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
 {top_users_context}
-
+{cultural_context}
 Por favor, forneça um resumo ELABORADO seguindo EXATAMENTE esta estrutura:
 
 📋 RESUMO EXECUTIVO
@@ -179,6 +184,9 @@ Foque apenas nos pontos mais importantes."""
 
         logger.info(f"Dividindo {len(messages)} mensagens em {len(chunks)} blocos")
 
+        # Enriquecer contexto cultural (uma vez para todas as mensagens)
+        cultural_context = await self.context_enricher.enrich_context(messages, max_searches=5)
+
         # Resumir cada bloco
         chunk_summaries = []
         for i, chunk in enumerate(chunks, 1):
@@ -217,7 +225,7 @@ Seja conciso mas completo."""
 
 TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
 {top_users_context}
-
+{cultural_context}
 Use linguagem informal mas SEM EXAGERAR. Seja natural, use algumas gírias quando fizer sentido, mas mantenha a clareza.
 Escreva de forma leve e fluida, como uma conversa normal.
 

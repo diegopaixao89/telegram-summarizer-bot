@@ -2,6 +2,59 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [1.4.0] - 2026-01-31
+
+### ✨ Adicionado
+- **Enriquecimento de Contexto Cultural:**
+  - 🌐 Novo módulo `context_enricher.py` para buscar contexto de referências culturais
+  - 🔍 Extração automática de termos culturais brasileiros das mensagens
+  - 🎭 Reconhecimento de programas de TV (BBB, A Fazenda, Domingão)
+  - 🎪 Identificação de eventos (Oscar, Grammy, Rock in Rio, Copa do Mundo)
+  - 📺 Detecção de canais/plataformas (Globo, Netflix, HBO)
+  - 🗣️ Padrões especiais para apelidos e gírias ("Gay da shoppe", "menina com armadura")
+
+- **Sistema de Cache Inteligente:**
+  - ⚡ Cache com TTL de 24 horas para evitar pesquisas repetidas
+  - 📊 Estatísticas de cache (hits/misses)
+  - 🧹 Limpeza automática de entradas expiradas
+
+- **Integração com DuckDuckGo:**
+  - 🆓 API gratuita sem necessidade de chave
+  - ⏱️ Timeout de 3 segundos por pesquisa
+  - 🔄 Até 5 pesquisas simultâneas por resumo
+  - 📝 Extração de Abstract, Definition e RelatedTopics
+
+### 🔧 Modificado
+- `summarizer.py`:
+  - Integração com `ContextEnricher` no método `summarize()`
+  - Contexto cultural adicionado ao prompt da IA
+  - Suporte a enriquecimento também no modo chunks (`_summarize_in_chunks()`)
+
+### 🎯 Impacto
+- **Performance:** +1-3s no primeiro resumo, ~0ms depois (cache)
+- **Custo:** R$ 0,00 (API gratuita)
+- **Qualidade:** Resumos mais específicos e contextualizados
+
+### 📄 Documentação
+- Novo arquivo `TESTE_CONTEXTO_CULTURAL.md` com guia completo de teste
+- Exemplos de termos reconhecidos
+- Troubleshooting e verificação
+
+### 🔬 Exemplo
+**Antes:**
+```
+O grupo discutiu vários assuntos interessantes sobre entretenimento.
+```
+
+**Depois:**
+```
+O grupo discutiu sobre BBB (Big Brother Brasil: reality show da TV Globo
+desde 2002) e comentou sobre o Oscar (premiação anual da Academia de
+Artes e Ciências Cinematográficas).
+```
+
+---
+
 ## [1.3.0] - 2026-01-30
 
 ### ✨ Adicionado
@@ -161,4 +214,4 @@ Seguimos [Semantic Versioning](https://semver.org/):
 
 ---
 
-**Última atualização:** 30/01/2026
+**Última atualização:** 31/01/2026
