@@ -1,15 +1,21 @@
 import os
 from dotenv import load_dotenv
 
-# Carregar variáveis de ambiente
+# Carregar variáveis de ambiente do .env (para ambiente local)
+# No Koyeb, as variáveis são injetadas diretamente como environment variables
 load_dotenv()
 
 # Configurações do Telegram
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
 
 # Configurações da API de IA
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+
+# Debug: printar se as keys foram carregadas (sem mostrar os valores)
+print(f"[CONFIG] TELEGRAM_BOT_TOKEN: {'✅ Loaded' if TELEGRAM_BOT_TOKEN else '❌ Missing'}")
+print(f"[CONFIG] GROQ_API_KEY: {'✅ Loaded' if GROQ_API_KEY else '❌ Missing'}")
+print(f"[CONFIG] GEMINI_API_KEY: {'✅ Loaded' if GEMINI_API_KEY else '❌ Missing'}")
 
 # Configurações do banco de dados
 DATABASE_PATH = os.getenv("DATABASE_PATH", "./data/messages.db")
