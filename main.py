@@ -4,8 +4,10 @@ Main entry point - Bot + Health Check HTTP Server
 import os
 import asyncio
 import logging
+import random
 from aiohttp import web
 from telegram.ext import Application
+from telegram.error import Conflict
 from bot import start, stats, resumo, resumo_hoje, resumo_personalizado, resumo_rapido, save_message, post_init, db
 from telegram.ext import CommandHandler, MessageHandler, filters
 from telegram import Update
@@ -39,7 +41,12 @@ async def start_health_server():
     await asyncio.Event().wait()
 
 async def start_bot():
-    """Start Telegram bot"""
+    """Start Telegram bot with conflict handling"""
+    # Random startup delay (5-20s) to avoid multiple instances starting simultaneously
+    startup_delay = random.uniform(5, 20)
+    logger.info(f"Waiting {startup_delay:.1f}s before starting to avoid conflicts...")
+    await asyncio.sleep(startup_delay)
+
     # Initialize database BEFORE starting the bot
     logger.info("Initializing database...")
     os.makedirs('./data', exist_ok=True)
@@ -67,7 +74,28 @@ async def start_bot():
     logger.info("Starting Telegram bot...")
     await application.initialize()
     await application.start()
-    await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+
+    # Start polling with conflict retry logic
+    max_retries = 10
+    retry_count = 0
+
+    while retry_count < max_retries:
+        try:
+            logger.info(f"Starting polling (attempt {retry_count + 1}/{max_retries})...")
+            await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+            logger.info("✅ Bot polling started successfully!")
+            break
+        except Conflict as e:
+            retry_count += 1
+            wait_time = min(30 * retry_count, 300)  # Max 5 minutes
+            logger.warning(f"⚠️  Conflict detected (attempt {retry_count}/{max_retries}): {e}")
+            logger.info(f"Waiting {wait_time}s for other instance to stop...")
+            await asyncio.sleep(wait_time)
+
+            if retry_count >= max_retries:
+                logger.error("❌ Max retries reached. Another instance is persistently running.")
+                logger.error("Please check Koyeb and ensure only 1 instance is configured.")
+                raise
 
     # Keep bot running
     await asyncio.Event().wait()
