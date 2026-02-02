@@ -58,13 +58,10 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def debug(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Mostra status da configuração do bot"""
-    import os
+    gemini_configured = "✅ CONFIGURADA" if config.GEMINI_API_KEY else "❌ NÃO CONFIGURADA"
+    groq_configured = "✅ CONFIGURADA" if config.GROQ_API_KEY else "❌ NÃO CONFIGURADA"
 
-    gemini_configured = "✅ CONFIGURADA" if os.getenv("GEMINI_API_KEY") else "❌ NÃO CONFIGURADA"
-    groq_configured = "✅ CONFIGURADA" if os.getenv("GROQ_API_KEY") else "❌ NÃO CONFIGURADA"
-
-    # Verificar se o Gemini model está inicializado
-    from bot import summarizer
+    # Verificar se o Gemini model está inicializado (usa a variável global)
     gemini_active = "✅ ATIVO" if summarizer.gemini_model else "❌ INATIVO"
 
     await update.message.reply_text(
