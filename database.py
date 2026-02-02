@@ -52,7 +52,7 @@ class Database:
             logger.error(f"Erro ao salvar mensagem: {e}")
 
     async def get_last_n_messages(self, chat_id: int, n: int = 100) -> List[Dict]:
-        """Recupera as últimas N mensagens de um chat"""
+        """Recupera as últimas N mensagens de um chat (do mais novo pro mais velho)"""
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             async with db.execute("""
@@ -62,10 +62,11 @@ class Database:
                 LIMIT ?
             """, (chat_id, n)) as cursor:
                 rows = await cursor.fetchall()
-                return [dict(row) for row in reversed(rows)]
+                # Retorna do mais recente pro mais velho (DESC)
+                return [dict(row) for row in rows]
 
     async def get_messages_today(self, chat_id: int) -> List[Dict]:
-        """Recupera mensagens de hoje de um chat"""
+        """Recupera mensagens de hoje de um chat (do mais novo pro mais velho)"""
         today = datetime.now().date()
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
@@ -73,8 +74,21 @@ class Database:
                 SELECT * FROM messages
                 WHERE chat_id = ?
                 AND DATE(timestamp) = ?
-                ORDER BY timestamp ASC
+                ORDER BY timestamp DESC
             """, (chat_id, today)) as cursor:
+                rows = await cursor.fetchall()
+                return [dict(row) for row in rows]
+
+    async def get_messages_last_hours(self, chat_id: int, hours: int = 12) -> List[Dict]:
+        """Recupera mensagens das últimas N horas (do mais novo pro mais velho)"""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute("""
+                SELECT * FROM messages
+                WHERE chat_id = ?
+                AND timestamp >= datetime('now', '-' || ? || ' hours')
+                ORDER BY timestamp DESC
+            """, (chat_id, hours)) as cursor:
                 rows = await cursor.fetchall()
                 return [dict(row) for row in rows]
 

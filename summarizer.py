@@ -108,7 +108,8 @@ REGRAS CRÍTICAS:
 5. FOQUE EM EVENTOS RECENTES - Se algo é mencionado repetidamente mas parece antigo, indique isso ou omita
 6. VERIFIQUE COERÊNCIA - Não invente informações, relate apenas o que está claro nas mensagens
 
-PERÍODO: Mensagens recentes (últimas 24h prioritariamente)
+⚠️ IMPORTANTE: Estas são mensagens das ÚLTIMAS 12 HORAS (contexto RECENTE).
+NÃO mencione eventos antigos. Foque APENAS no que aconteceu RECENTEMENTE.
 
 MENSAGENS (com timestamp):
 {formatted_messages}
