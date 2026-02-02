@@ -9,82 +9,115 @@ from bs4 import BeautifulSoup
 import config
 import base64
 from groq import Groq
+import google.generativeai as genai
+from PIL import Image
+import io
 
 logger = logging.getLogger(__name__)
 
 class MediaProcessor:
     def __init__(self):
-        # Usar Groq Vision (GRATUITO!) para análise de imagens
-        self.groq_client = Groq(api_key=config.GROQ_API_KEY)
-        self.vision_model = "llama-3.2-11b-vision-preview"  # Modelo de visão gratuito do Groq
-        logger.info("Groq Vision API inicializada para análise de imagens (GRATUITO)")
+        # Usar Gemini Vision (melhor que Groq Vision!)
+        if config.GEMINI_API_KEY:
+            genai.configure(api_key=config.GEMINI_API_KEY)
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+            self.use_gemini = True
+            logger.info("✅ Gemini Vision ativo para análise de imagens")
+        else:
+            # Fallback para Groq Vision
+            self.groq_client = Groq(api_key=config.GROQ_API_KEY)
+            self.vision_model = "llama-3.2-11b-vision-preview"
+            self.use_gemini = False
+            logger.warning("⚠️  Usando Groq Vision (fallback) - Configure GEMINI_API_KEY para melhor qualidade")
 
     async def process_photo(self, photo_bytes: bytes, caption: str = None) -> str:
         """
-        Processa imagem usando Groq Vision API (GRATUITO!)
+        Processa imagem usando Gemini Vision (melhor qualidade!)
         Retorna descrição detalhada da imagem
         """
         try:
-            # Converter imagem para base64
-            image_base64 = base64.b64encode(photo_bytes).decode('utf-8')
-
-            # Determinar tipo de imagem (assumir JPEG por padrão)
-            media_type = "image/jpeg"
-            if photo_bytes[:4] == b'\x89PNG':
-                media_type = "image/png"
-            elif photo_bytes[:3] == b'GIF':
-                media_type = "image/gif"
-            elif photo_bytes[:4] == b'RIFF':
-                media_type = "image/webp"
-
-            # Usar Groq Vision para analisar a imagem
-            prompt = """Analise esta imagem em português e descreva:
+            prompt = """Analise esta imagem em português e descreva de forma CLARA e OBJETIVA:
 1. O que você vê (pessoas, objetos, texto, memes)
 2. Contexto (é um print de tweet? post? meme? foto? notícia?)
-3. Se há texto na imagem, transcreva-o EXATAMENTE
+3. Se há TEXTO na imagem, transcreva-o EXATAMENTE
 4. Qual o assunto principal e tema
-5. Se for relacionado a BBB ou reality show, mencione
+5. Se for sobre BBB, reality show ou celebridade, mencione quem/o quê
 
-Seja conciso mas específico (max 150 palavras)."""
+Seja específico e direto (max 150 palavras)."""
 
-            # Criar data URL para Groq
-            image_url = f"data:{media_type};base64,{image_base64}"
+            # Tentar usar Gemini Vision primeiro
+            if self.use_gemini:
+                try:
+                    # Converter bytes para PIL Image
+                    image = Image.open(io.BytesIO(photo_bytes))
 
-            response = self.groq_client.chat.completions.create(
-                model=self.vision_model,
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": image_url
-                            }
-                        }
-                    ]
-                }],
-                temperature=0.3,
-                max_tokens=400
-            )
+                    # Usar Gemini para analisar
+                    response = self.gemini_model.generate_content(
+                        [prompt, image],
+                        generation_config=genai.types.GenerationConfig(
+                            temperature=0.3,
+                            max_output_tokens=400,
+                        )
+                    )
 
-            # Extrair descrição
-            image_description = response.choices[0].message.content
+                    image_description = response.text
+                    logger.info(f"✅ Imagem analisada com Gemini Vision: {len(photo_bytes)} bytes")
+
+                except Exception as e:
+                    logger.warning(f"⚠️  Erro com Gemini Vision, usando Groq: {e}")
+                    # Fallback para Groq
+                    image_base64 = base64.b64encode(photo_bytes).decode('utf-8')
+                    media_type = "image/jpeg"
+                    if photo_bytes[:4] == b'\x89PNG':
+                        media_type = "image/png"
+
+                    image_url = f"data:{media_type};base64,{image_base64}"
+                    response = self.groq_client.chat.completions.create(
+                        model=self.vision_model,
+                        messages=[{
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {"type": "image_url", "image_url": {"url": image_url}}
+                            ]
+                        }],
+                        temperature=0.3,
+                        max_tokens=400
+                    )
+                    image_description = response.choices[0].message.content
+                    logger.info(f"Imagem analisada com Groq Vision (fallback): {len(photo_bytes)} bytes")
+            else:
+                # Usar Groq diretamente
+                image_base64 = base64.b64encode(photo_bytes).decode('utf-8')
+                media_type = "image/jpeg"
+                if photo_bytes[:4] == b'\x89PNG':
+                    media_type = "image/png"
+
+                image_url = f"data:{media_type};base64,{image_base64}"
+                response = self.groq_client.chat.completions.create(
+                    model=self.vision_model,
+                    messages=[{
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {"type": "image_url", "image_url": {"url": image_url}}
+                        ]
+                    }],
+                    temperature=0.3,
+                    max_tokens=400
+                )
+                image_description = response.choices[0].message.content
+                logger.info(f"Imagem analisada com Groq Vision: {len(photo_bytes)} bytes")
 
             # Formatar resultado
             result = f"📷 [Imagem: {image_description}"
             if caption:
                 result += f" | Legenda: {caption}"
             result += "]"
-
-            logger.info(f"Imagem analisada com Groq Vision (gratuito): {len(photo_bytes)} bytes")
             return result
 
         except Exception as e:
-            logger.error(f"Erro ao processar imagem com Groq Vision: {e}")
+            logger.error(f"❌ Erro ao processar imagem: {e}")
             # Fallback: retornar apenas caption
             description = "📷 [Imagem"
             if caption:

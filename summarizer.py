@@ -146,8 +146,9 @@ Máximo 3-5 citações textuais importantes:
 4. @username (X msgs) - Resumo dos tópicos que discutiu (máx 12 palavras)
 5. @username (X msgs) - Resumo dos tópicos que discutiu (máx 12 palavras)
 
-🔗 LINKS RELEVANTES
-Liste apenas links importantes com descrição breve. Se não houver, omita esta seção."""
+🔗 LINKS COMPARTILHADOS
+Liste links importantes no formato: [Título do link](url)
+Apenas links relevantes. Omita se não houver."""
 
         try:
             # Tentar com Gemini primeiro (melhor qualidade)
