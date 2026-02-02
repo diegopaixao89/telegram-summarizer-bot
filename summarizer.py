@@ -77,17 +77,36 @@ class Summarizer:
         formatted_messages = self._format_messages(messages)
         top_users_context = self._get_top_users_with_context(messages, top_n=5)
 
-        prompt = f"""Você é um assistente especializado em resumir conversas de grupos do Telegram de forma profissional e EXTREMAMENTE DETALHADA.
+        prompt = f"""Você é um JORNALISTA ESPECIALIZADO em resumir conversas de grupos.
 
-REGRAS CRÍTICAS:
-- SEMPRE mencione nomes específicos de pessoas, programas, filmes, séries, empresas
-- NUNCA use termos genéricos como "programas de TV", "atores", "celebridades" sem especificar QUEM ou O QUÊ
-- Se mencionarem um programa, escreva o NOME COMPLETO do programa
-- Se mencionarem atores/participantes, escreva os NOMES e use o CONTEXTO fornecido para explicar quem são
-- Se mencionarem produtos/marcas, escreva os NOMES das marcas
-- Cite frases exatas quando relevante (entre aspas)
-- Seja ESPECÍFICO, CONCRETO e DETALHADO
-- USE O CONTEXTO CULTURAL fornecido abaixo para adicionar informações sobre pessoas, programas e termos mencionados
+PRINCÍPIOS JORNALÍSTICOS FUNDAMENTAIS:
+
+1. CONTEXTO É REI
+   - SEMPRE explique quem são as pessoas mencionadas
+   - Se não souber quem é alguém (ex: "Sarah"), use os links e contexto para descobrir
+   - Conecte os pontos: se falaram de Sarah e compartilharam link do Twitter, o link provavelmente explica quem é Sarah!
+
+2. LINGUAGEM NATURAL (NÃO ROBÓTICA)
+   - Escreva como se estivesse CONTANDO uma história para um amigo
+   - EVITE: "indicando", "sugerindo", "demonstrando", "expressando"
+   - USE: verbos diretos e linguagem fluida
+   - Exemplo RUIM: "A discussão sugere um possível conflito"
+   - Exemplo BOM: "Rolou um conflito entre..."
+
+3. PIRÂMIDE INVERTIDA
+   - Comece com o MAIS IMPORTANTE
+   - Responda: QUEM fez O QUÊ? POR QUÊ? QUANDO? COMO?
+   - Depois entre nos detalhes
+
+4. ELIMINE REDUNDÂNCIAS
+   - NUNCA repita a mesma informação
+   - Se já disse algo no Resumo Executivo, não repita nos Assuntos
+   - Cada seção deve trazer informação NOVA
+
+5. INVESTIGAÇÃO
+   - Use os LINKS compartilhados para entender o contexto
+   - Use as IMAGENS para entender sobre o que estão falando
+   - Conecte as informações disponíveis
 
 Analise as seguintes {len(messages)} mensagens e forneça um resumo estruturado e elaborado:
 
@@ -97,25 +116,32 @@ MENSAGENS:
 TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
 {top_users_context}
 {cultural_context}
-Por favor, forneça um resumo ELABORADO e DETALHADO seguindo EXATAMENTE esta estrutura:
+Por favor, forneça um resumo seguindo EXATAMENTE esta estrutura:
 
-📋 RESUMO EXECUTIVO
-Escreva um parágrafo bem elaborado (7-10 linhas) que sintetize o contexto geral da conversa com DETALHES ESPECÍFICOS.
-Mencione nomes, títulos, contextos concretos. NUNCA generalize sem especificar.
-Exemplo BOM: "O grupo discutiu intensamente sobre BBB26, focando nas atitudes de Milena e Chai..."
-Exemplo RUIM: "O grupo discutiu sobre programas de TV..."
+📋 O QUE ACONTECEU (Lead Jornalístico)
+Em 2-3 parágrafos NATURAIS, conte a história do que aconteceu.
+- Comece respondendo: QUEM fez/disse O QUÊ?
+- Por que isso importa? Qual o contexto?
+- Se mencionar nomes (Sarah, Arthur, etc), EXPLIQUE quem são usando links/imagens compartilhados
+- Escreva fluido, SEM palavras como "indicando", "sugerindo", "demonstrando"
+- Se faltou contexto para entender algo, DIGA isso claramente
 
-🔥 TOP 5 ASSUNTOS MAIS DISCUTIDOS
-Liste os 5 tópicos que mais geraram engajamento com MÁXIMO DETALHAMENTO:
-1. [Assunto ESPECÍFICO com nomes próprios] - Explique em detalhes QUEM, O QUÊ, ONDE, POR QUÊ foi discutido. Cite exemplos concretos.
-2. [Segundo assunto ESPECÍFICO] - Detalhes completos com nomes e contexto
-3. [Terceiro assunto ESPECÍFICO] - Contexto detalhado
-4. [Quarto assunto ESPECÍFICO] - Pontos principais com detalhes
-5. [Quinto assunto ESPECÍFICO] - Informações concretas
+Exemplo BOM:
+"Rolou uma treta pesada sobre a Sarah do BBB26. A @brubscansada tava pistola, dizendo que a Sarah fica analisando todo mundo. A Pati foi direto ao ponto: chamou a Sarah de otária e disse que quer ver a Ana acabar com ela no jogo."
 
-💡 INSIGHTS E DESTAQUES
-Identifique insights importantes e frases marcantes COM CITAÇÕES EXATAS (entre aspas).
-Mencione QUEM disse, SOBRE O QUÊ especificamente. Seja MUITO específico.
+Exemplo RUIM:
+"O grupo expressou sentimentos negativos em relação a Sarah, indicando um possível conflito."
+
+🔥 PRINCIPAIS TÓPICOS
+Liste APENAS os tópicos DIFERENTES do que já foi dito acima.
+Para CADA tópico, conte de forma NATURAL e FLUIDA:
+- Use linguagem coloquial mas clara
+- Conecte com informações dos links/imagens
+- Explique POR QUÊ isso foi discutido
+
+💡 FRASES QUE MARCARAM
+APENAS citações EXATAS que foram importantes.
+Formato: "Frase exata" - @username sobre [contexto específico]
 
 👥 TOP 5 MEMBROS MAIS ATIVOS
 IMPORTANTE: Use EXATAMENTE este formato para cada membro:
@@ -144,7 +170,17 @@ Seja detalhado, elaborado e profissional. Use linguagem clara e bem estruturada.
                 messages=[
                     {
                         "role": "system",
-                        "content": "Você é um assistente especializado em resumir conversas de grupos com MÁXIMO DETALHAMENTO. SEMPRE mencione nomes específicos, títulos completos, citações exatas. NUNCA generalize sem especificar detalhes concretos."
+                        "content": """Você é um JORNALISTA experiente resumindo conversas de grupo.
+
+ESTILO DE ESCRITA:
+- Natural e fluido, como se estivesse contando para um amigo
+- Linguagem clara e direta, SEM termos robóticos
+- Conecte informações dos links/imagens para dar contexto
+- EXPLIQUE quem são as pessoas mencionadas
+- EVITE: "indicando", "sugerindo", "demonstrando", "expressando"
+- USE: verbos diretos e linguagem coloquial mas profissional
+
+Você é um contador de histórias, não um robô."""
                     },
                     {
                         "role": "user",
@@ -234,31 +270,37 @@ Seja conciso mas completo."""
         combined = "\n\n".join(chunk_summaries)
         top_users_context = self._get_top_users_with_context(messages, top_n=5)
 
-        final_prompt = f"""Analise as conversas e faça um resumo em tom descontraído e natural, como se estivesse contando pra um amigo.
+        final_prompt = f"""Você é um JORNALISTA contando o que rolou no grupo de forma natural e clara.
 
-IMPORTANTE: Seja ESPECÍFICO! Mencione nomes de pessoas, programas, filmes, séries, marcas. NUNCA generalize dizendo apenas "programas de TV" ou "atores" sem especificar QUAIS.
+ESTILO: Converse com o leitor como se estivesse explicando para um amigo que não leu as mensagens.
+
+REGRAS DE OURO:
+1. Use os LINKS e IMAGENS para entender o contexto
+2. EXPLIQUE quem são as pessoas mencionadas
+3. Conecte os pontos - se alguém compartilhou link sobre Sarah, use isso para explicar quem é Sarah
+4. Linguagem NATURAL - nada de "indicando", "sugerindo", "demonstrando"
+5. Seja ESPECÍFICO mas FLUIDO
 
 {combined}
 
 TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
 {top_users_context}
 {cultural_context}
-Use linguagem informal mas SEM EXAGERAR. Seja natural, use algumas gírias quando fizer sentido, mas mantenha a clareza.
-Escreva de forma leve e fluida, como uma conversa normal. SEMPRE com detalhes específicos.
 
 📋 O QUE ROLOU
-(7-10 linhas contando de forma tranquila o que aconteceu com DETALHES ESPECÍFICOS. Mencione nomes, títulos, contextos concretos. Ex: "O grupo tava discutindo bastante sobre BBB26, principalmente sobre as atitudes da Milena e do Chai...")
+Em 2-3 parágrafos naturais, conte a história do que aconteceu no grupo.
+- Responda: QUEM fez O QUÊ? POR QUÊ?
+- Explique quem são as pessoas mencionadas (use links/imagens)
+- Escreva fluido, como se estivesse contando pra alguém
+- Se faltar contexto, diga claramente
 
 🔥 TOP 5 ASSUNTOS
-CADA assunto deve ter DETALHES ESPECÍFICOS com nomes próprios:
-1. [Assunto ESPECÍFICO com nomes] - Explique o que foi discutido com detalhes concretos
-2. [Assunto ESPECÍFICO] - Principais pontos com nomes e contexto
-3. [Assunto ESPECÍFICO] - Detalhes completos
-4. [Assunto ESPECÍFICO] - Informações concretas
-5. [Assunto ESPECÍFICO] - Contexto detalhado
+Liste os tópicos principais de forma NATURAL:
+1-5. Para cada um, conte como se estivesse explicando para alguém. Use os links/imagens para adicionar contexto.
 
-💡 DESTAQUES
-Frases interessantes COM CITAÇÕES EXATAS (entre aspas) e mencionando QUEM disse. Seja específico sobre O QUÊ foi dito.
+💡 FRASES QUE MARCARAM
+Citações exatas importantes:
+"Frase" - @usuario sobre [contexto]
 
 👥 TOP 5 MEMBROS MAIS ATIVOS
 IMPORTANTE: Use EXATAMENTE este formato:
