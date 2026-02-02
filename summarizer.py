@@ -75,7 +75,16 @@ class Summarizer:
         formatted_messages = self._format_messages(messages)
         top_users_context = self._get_top_users_with_context(messages, top_n=5)
 
-        prompt = f"""Você é um assistente especializado em resumir conversas de grupos do Telegram de forma profissional e detalhada.
+        prompt = f"""Você é um assistente especializado em resumir conversas de grupos do Telegram de forma profissional e EXTREMAMENTE DETALHADA.
+
+REGRAS CRÍTICAS:
+- SEMPRE mencione nomes específicos de pessoas, programas, filmes, séries, empresas
+- NUNCA use termos genéricos como "programas de TV", "atores", "celebridades" sem especificar QUEM ou O QUÊ
+- Se mencionarem um programa, escreva o NOME COMPLETO do programa
+- Se mencionarem atores, escreva os NOMES dos atores
+- Se mencionarem produtos/marcas, escreva os NOMES das marcas
+- Cite frases exatas quando relevante (entre aspas)
+- Seja ESPECÍFICO, CONCRETO e DETALHADO
 
 Analise as seguintes {len(messages)} mensagens e forneça um resumo estruturado e elaborado:
 
@@ -85,23 +94,25 @@ MENSAGENS:
 TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
 {top_users_context}
 {cultural_context}
-Por favor, forneça um resumo ELABORADO seguindo EXATAMENTE esta estrutura:
+Por favor, forneça um resumo ELABORADO e DETALHADO seguindo EXATAMENTE esta estrutura:
 
 📋 RESUMO EXECUTIVO
-Escreva um parágrafo bem elaborado (5-7 linhas) que sintetize o contexto geral da conversa,
-destacando o clima, principais discussões e conclusões gerais. Seja descritivo e contextual.
+Escreva um parágrafo bem elaborado (7-10 linhas) que sintetize o contexto geral da conversa com DETALHES ESPECÍFICOS.
+Mencione nomes, títulos, contextos concretos. NUNCA generalize sem especificar.
+Exemplo BOM: "O grupo discutiu intensamente sobre BBB26, focando nas atitudes de Milena e Chai..."
+Exemplo RUIM: "O grupo discutiu sobre programas de TV..."
 
 🔥 TOP 5 ASSUNTOS MAIS DISCUTIDOS
-Liste os 5 tópicos que mais geraram engajamento e discussão, ordenados por relevância:
-1. [Assunto mais falado] - Breve contexto e principais pontos discutidos
-2. [Segundo assunto] - Contexto e pontos principais
-3. [Terceiro assunto] - Contexto e pontos principais
-4. [Quarto assunto] - Contexto e pontos principais
-5. [Quinto assunto] - Contexto e pontos principais
+Liste os 5 tópicos que mais geraram engajamento com MÁXIMO DETALHAMENTO:
+1. [Assunto ESPECÍFICO com nomes próprios] - Explique em detalhes QUEM, O QUÊ, ONDE, POR QUÊ foi discutido. Cite exemplos concretos.
+2. [Segundo assunto ESPECÍFICO] - Detalhes completos com nomes e contexto
+3. [Terceiro assunto ESPECÍFICO] - Contexto detalhado
+4. [Quarto assunto ESPECÍFICO] - Pontos principais com detalhes
+5. [Quinto assunto ESPECÍFICO] - Informações concretas
 
 💡 INSIGHTS E DESTAQUES
-Identifique insights importantes, frases marcantes, opiniões relevantes ou informações valiosas
-compartilhadas na conversa. Seja específico e cite exemplos quando relevante.
+Identifique insights importantes e frases marcantes COM CITAÇÕES EXATAS (entre aspas).
+Mencione QUEM disse, SOBRE O QUÊ especificamente. Seja MUITO específico.
 
 👥 TOP 5 MEMBROS MAIS ATIVOS
 IMPORTANTE: Use EXATAMENTE este formato para cada membro:
@@ -130,15 +141,15 @@ Seja detalhado, elaborado e profissional. Use linguagem clara e bem estruturada.
                 messages=[
                     {
                         "role": "system",
-                        "content": "Você é um assistente especializado em resumir conversas de grupos, identificando pontos-chave e informações importantes."
+                        "content": "Você é um assistente especializado em resumir conversas de grupos com MÁXIMO DETALHAMENTO. SEMPRE mencione nomes específicos, títulos completos, citações exatas. NUNCA generalize sem especificar detalhes concretos."
                     },
                     {
                         "role": "user",
                         "content": prompt
                     }
                 ],
-                temperature=0.4,
-                max_tokens=4500
+                temperature=0.3,
+                max_tokens=6000
             )
 
             summary = response.choices[0].message.content
@@ -222,26 +233,29 @@ Seja conciso mas completo."""
 
         final_prompt = f"""Analise as conversas e faça um resumo em tom descontraído e natural, como se estivesse contando pra um amigo.
 
+IMPORTANTE: Seja ESPECÍFICO! Mencione nomes de pessoas, programas, filmes, séries, marcas. NUNCA generalize dizendo apenas "programas de TV" ou "atores" sem especificar QUAIS.
+
 {combined}
 
 TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
 {top_users_context}
 {cultural_context}
 Use linguagem informal mas SEM EXAGERAR. Seja natural, use algumas gírias quando fizer sentido, mas mantenha a clareza.
-Escreva de forma leve e fluida, como uma conversa normal.
+Escreva de forma leve e fluida, como uma conversa normal. SEMPRE com detalhes específicos.
 
 📋 O QUE ROLOU
-(5-7 linhas contando de forma tranquila o que aconteceu. Ex: "O grupo tava bem movimentado hoje, o pessoal discutiu bastante sobre...")
+(7-10 linhas contando de forma tranquila o que aconteceu com DETALHES ESPECÍFICOS. Mencione nomes, títulos, contextos concretos. Ex: "O grupo tava discutindo bastante sobre BBB26, principalmente sobre as atitudes da Milena e do Chai...")
 
 🔥 TOP 5 ASSUNTOS
-1. [Assunto] - O que foi discutido, em linguagem natural
-2. [Assunto] - Principais pontos da conversa
-3. [Assunto]
-4. [Assunto]
-5. [Assunto]
+CADA assunto deve ter DETALHES ESPECÍFICOS com nomes próprios:
+1. [Assunto ESPECÍFICO com nomes] - Explique o que foi discutido com detalhes concretos
+2. [Assunto ESPECÍFICO] - Principais pontos com nomes e contexto
+3. [Assunto ESPECÍFICO] - Detalhes completos
+4. [Assunto ESPECÍFICO] - Informações concretas
+5. [Assunto ESPECÍFICO] - Contexto detalhado
 
 💡 DESTAQUES
-Frases interessantes, opiniões relevantes ou informações importantes que apareceram.
+Frases interessantes COM CITAÇÕES EXATAS (entre aspas) e mencionando QUEM disse. Seja específico sobre O QUÊ foi dito.
 
 👥 TOP 5 MEMBROS MAIS ATIVOS
 IMPORTANTE: Use EXATAMENTE este formato:
@@ -267,8 +281,8 @@ Mantenha o tom leve e natural, mas sem forçar muito a barra. Seja você mesmo c
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": final_prompt}],
-                temperature=0.4,
-                max_tokens=3500
+                temperature=0.3,
+                max_tokens=5000
             )
             logger.info(f"Resumo final gerado para {len(messages)} mensagens")
             return response.choices[0].message.content
