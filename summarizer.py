@@ -12,6 +12,7 @@ class Summarizer:
         self.client = Groq(api_key=config.GROQ_API_KEY)
         self.model = "llama-3.3-70b-versatile"  # Modelo rápido e gratuito
         self.context_enricher = ContextEnricher()
+        logger.info("✨ Summarizer inicializado com Context Enricher v1.4.0")
 
     def _format_messages(self, messages: List[Dict]) -> str:
         """Formata mensagens para o prompt"""
