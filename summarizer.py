@@ -67,8 +67,8 @@ class Summarizer:
         if not messages:
             return "Nenhuma mensagem para resumir."
 
-        # Se tem muitas mensagens, divide em blocos
-        if len(messages) > 800:
+        # Se tem muitas mensagens, divide em blocos para evitar limite de tokens
+        if len(messages) > 250:
             return await self._summarize_in_chunks(messages)
 
         # Enriquecer contexto cultural (aumentado para 10 para incluir mais nomes de pessoas)
@@ -230,7 +230,7 @@ Foque apenas nos pontos mais importantes."""
 
     async def _summarize_in_chunks(self, messages: List[Dict]) -> str:
         """Resume mensagens em blocos para evitar limite de tokens"""
-        chunk_size = 400  # Mensagens por bloco
+        chunk_size = 200  # Mensagens por bloco (reduzido para evitar limite Groq)
         chunks = [messages[i:i + chunk_size] for i in range(0, len(messages), chunk_size)]
 
         logger.info(f"Dividindo {len(messages)} mensagens em {len(chunks)} blocos")

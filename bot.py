@@ -164,15 +164,15 @@ async def resumo_personalizado(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def resumo_rapido(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Gera resumo rápido das últimas 500 mensagens"""
+    """Gera resumo rápido das últimas 300 mensagens"""
     chat_id = update.effective_chat.id
 
     processing_msg = await update.message.reply_text(
-        "⚡ Gerando resumo rápido das últimas 500 mensagens..."
+        "⚡ Gerando resumo rápido das últimas 300 mensagens..."
     )
 
     try:
-        messages = await db.get_last_n_messages(chat_id, 500)
+        messages = await db.get_last_n_messages(chat_id, 300)
 
         if not messages:
             await processing_msg.edit_text(
@@ -180,7 +180,8 @@ async def resumo_rapido(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-        summary = await summarizer.quick_summary(messages)
+        # Usar summarize normal em vez de quick_summary para ter contexto enriquecido
+        summary = await summarizer.summarize(messages)
 
         header = f"⚡ RESUMO RÁPIDO - {len(messages)} mensagens\n\n"
         await processing_msg.edit_text(header + summary)
