@@ -1,6 +1,5 @@
 import logging
 from typing import List, Dict
-from groq import Groq
 import google.generativeai as genai
 import config
 from context_enricher import ContextEnricher
@@ -11,27 +10,18 @@ logger = logging.getLogger(__name__)
 
 class Summarizer:
     def __init__(self):
-        # Groq para fallback e análise de imagens
-        self.groq_client = Groq(api_key=config.GROQ_API_KEY)
-        self.groq_model = "llama-3.3-70b-versatile"
+        # Google Gemini 1.5 Flash (ÚNICO modelo)
+        if not config.GEMINI_API_KEY:
+            raise ValueError("❌ GEMINI_API_KEY é OBRIGATÓRIA! Configure nas variáveis de ambiente.")
 
-        # Google Gemini como modelo principal (melhor qualidade, gratuito)
-        if config.GEMINI_API_KEY:
-            try:
-                logger.info("🔄 Configurando Google Gemini...")
-                genai.configure(api_key=config.GEMINI_API_KEY)
-                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
-                logger.info("✅✅✅ GEMINI ATIVO - Usando Google Gemini 1.5 Flash como modelo principal!")
-                logger.info("✅ Groq disponível como fallback")
-            except Exception as e:
-                self.gemini_model = None
-                logger.error(f"❌ ERRO ao inicializar Gemini: {e}")
-                logger.warning("⚠️  Usando apenas Groq como fallback")
-        else:
-            self.gemini_model = None
-            logger.error("❌❌❌ GEMINI_API_KEY NÃO ENCONTRADA!")
-            logger.error("❌ Bot vai usar apenas Groq (limite 100k tokens/dia já atingido)")
-            logger.error("❌ Configure GEMINI_API_KEY nas variáveis de ambiente!")
+        try:
+            logger.info("🔄 Configurando Google Gemini 1.5 Flash...")
+            genai.configure(api_key=config.GEMINI_API_KEY)
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+            logger.info("✅✅✅ GEMINI ATIVO - Modelo único para todos os resumos!")
+        except Exception as e:
+            logger.error(f"❌ ERRO CRÍTICO ao inicializar Gemini: {e}")
+            raise
 
         self.context_enricher = ContextEnricher()
         self.media_processor = MediaProcessor()
@@ -151,11 +141,8 @@ Liste links importantes no formato: [Título do link](url)
 Apenas links relevantes. Omita se não houver."""
 
         try:
-            # Tentar com Gemini primeiro (melhor qualidade)
-            if self.gemini_model:
-                try:
-                    logger.info("Gerando resumo com Google Gemini 1.5 Flash...")
-                    full_prompt = f"""Você é um jornalista profissional criando resumos objetivos de conversas.
+            logger.info("Gerando resumo com Google Gemini 1.5 Flash...")
+            full_prompt = f"""Você é um jornalista profissional criando resumos objetivos de conversas.
 
 ESTILO:
 - Direto e sintético - sem redundâncias
@@ -168,55 +155,21 @@ ESTILO:
 
 {prompt}"""
 
-                    response = self.gemini_model.generate_content(
-                        full_prompt,
-                        generation_config=genai.types.GenerationConfig(
-                            temperature=0.3,
-                            max_output_tokens=6000,
-                        )
-                    )
-
-                    summary = response.text
-                    logger.info(f"✅ Resumo gerado com Gemini para {len(messages)} mensagens")
-                    return summary
-
-                except Exception as e:
-                    logger.warning(f"⚠️  Erro com Gemini, tentando Groq: {e}")
-                    # Fallback para Groq
-                    pass
-
-            # Fallback: usar Groq
-            logger.info("Gerando resumo com Groq (fallback)...")
-            response = self.groq_client.chat.completions.create(
-                model=self.groq_model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """Você é um jornalista profissional criando resumos objetivos de conversas.
-
-ESTILO:
-- Direto e sintético - sem redundâncias
-- Tom profissional, não coloquial demais
-- Contextualize nomes usando informações disponíveis
-- Cada seção deve ter informação NOVA, não repetir o que já foi dito
-- Evite termos vagos: seja específico com nomes, datas, eventos"""
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.3,
-                max_tokens=6000
+            response = self.gemini_model.generate_content(
+                full_prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.3,
+                    max_output_tokens=6000,
+                )
             )
 
-            summary = response.choices[0].message.content
-            logger.info(f"✅ Resumo gerado com Groq para {len(messages)} mensagens")
+            summary = response.text
+            logger.info(f"✅ Resumo gerado com Gemini para {len(messages)} mensagens")
             return summary
 
         except Exception as e:
-            logger.error(f"❌ Erro ao gerar resumo: {e}")
-            return f"❌ Erro ao gerar resumo: {str(e)}"
+            logger.error(f"❌ Erro ao gerar resumo com Gemini: {e}")
+            return f"❌ Erro ao gerar resumo: {str(e)}\n\nVerifique se GEMINI_API_KEY está configurada corretamente."
 
     async def quick_summary(self, messages: List[Dict]) -> str:
         """Gera um resumo rápido e curto"""

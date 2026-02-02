@@ -8,10 +8,9 @@ import aiohttp
 from bs4 import BeautifulSoup
 import config
 import base64
-from groq import Groq
 import google.generativeai as genai
 
-# Imports opcionais para Gemini Vision
+# Imports para Gemini Vision
 try:
     from PIL import Image
     import io
@@ -19,6 +18,7 @@ try:
 except ImportError:
     PIL_AVAILABLE = False
     logger = logging.getLogger(__name__)
+    logger.warning("⚠️  PIL não disponível - Análise de imagens pode não funcionar")
 
 logger = logging.getLogger(__name__)
 
@@ -26,32 +26,24 @@ class MediaProcessor:
     def __init__(self):
         logger = logging.getLogger(__name__)
 
-        # Usar Gemini Vision (melhor que Groq Vision!) se PIL estiver disponível
-        if config.GEMINI_API_KEY and PIL_AVAILABLE:
-            try:
-                genai.configure(api_key=config.GEMINI_API_KEY)
-                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
-                self.use_gemini = True
-                logger.info("✅ Gemini Vision ativo para análise de imagens")
-            except Exception as e:
-                logger.error(f"❌ Erro ao inicializar Gemini Vision: {e}")
-                self.groq_client = Groq(api_key=config.GROQ_API_KEY)
-                self.vision_model = "llama-3.2-11b-vision-preview"
-                self.use_gemini = False
-        else:
-            # Fallback para Groq Vision
-            if not PIL_AVAILABLE:
-                logger.warning("⚠️  PIL não disponível - Usando Groq Vision")
-            if not config.GEMINI_API_KEY:
-                logger.warning("⚠️  GEMINI_API_KEY não configurada - Usando Groq Vision")
+        # Usar Gemini Vision (único modelo)
+        if not config.GEMINI_API_KEY:
+            raise ValueError("❌ GEMINI_API_KEY é obrigatória!")
 
-            self.groq_client = Groq(api_key=config.GROQ_API_KEY)
-            self.vision_model = "llama-3.2-11b-vision-preview"
-            self.use_gemini = False
+        if not PIL_AVAILABLE:
+            raise ImportError("❌ PIL (Pillow) não disponível! Instale com: pip install Pillow")
+
+        try:
+            genai.configure(api_key=config.GEMINI_API_KEY)
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+            logger.info("✅ Gemini Vision ativo para análise de imagens")
+        except Exception as e:
+            logger.error(f"❌ Erro CRÍTICO ao inicializar Gemini Vision: {e}")
+            raise
 
     async def process_photo(self, photo_bytes: bytes, caption: str = None) -> str:
         """
-        Processa imagem usando Gemini Vision (melhor qualidade!)
+        Processa imagem usando Gemini Vision
         Retorna descrição detalhada da imagem
         """
         try:
@@ -64,69 +56,20 @@ class MediaProcessor:
 
 Seja específico e direto (max 150 palavras)."""
 
-            # Tentar usar Gemini Vision primeiro
-            if self.use_gemini:
-                try:
-                    # Converter bytes para PIL Image
-                    image = Image.open(io.BytesIO(photo_bytes))
+            # Converter bytes para PIL Image
+            image = Image.open(io.BytesIO(photo_bytes))
 
-                    # Usar Gemini para analisar
-                    response = self.gemini_model.generate_content(
-                        [prompt, image],
-                        generation_config=genai.types.GenerationConfig(
-                            temperature=0.3,
-                            max_output_tokens=400,
-                        )
-                    )
-
-                    image_description = response.text
-                    logger.info(f"✅ Imagem analisada com Gemini Vision: {len(photo_bytes)} bytes")
-
-                except Exception as e:
-                    logger.warning(f"⚠️  Erro com Gemini Vision, usando Groq: {e}")
-                    # Fallback para Groq
-                    image_base64 = base64.b64encode(photo_bytes).decode('utf-8')
-                    media_type = "image/jpeg"
-                    if photo_bytes[:4] == b'\x89PNG':
-                        media_type = "image/png"
-
-                    image_url = f"data:{media_type};base64,{image_base64}"
-                    response = self.groq_client.chat.completions.create(
-                        model=self.vision_model,
-                        messages=[{
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {"type": "image_url", "image_url": {"url": image_url}}
-                            ]
-                        }],
-                        temperature=0.3,
-                        max_tokens=400
-                    )
-                    image_description = response.choices[0].message.content
-                    logger.info(f"Imagem analisada com Groq Vision (fallback): {len(photo_bytes)} bytes")
-            else:
-                # Usar Groq diretamente
-                image_base64 = base64.b64encode(photo_bytes).decode('utf-8')
-                media_type = "image/jpeg"
-                if photo_bytes[:4] == b'\x89PNG':
-                    media_type = "image/png"
-
-                image_url = f"data:{media_type};base64,{image_base64}"
-                response = self.groq_client.chat.completions.create(
-                    model=self.vision_model,
-                    messages=[{
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {"type": "image_url", "image_url": {"url": image_url}}
-                        ]
-                    }],
+            # Usar Gemini para analisar
+            response = self.gemini_model.generate_content(
+                [prompt, image],
+                generation_config=genai.types.GenerationConfig(
                     temperature=0.3,
-                    max_tokens=400
+                    max_output_tokens=400,
                 )
-                image_description = response.choices[0].message.content
-                logger.info(f"Imagem analisada com Groq Vision: {len(photo_bytes)} bytes")
+            )
+
+            image_description = response.text
+            logger.info(f"✅ Imagem analisada com Gemini Vision: {len(photo_bytes)} bytes")
 
             # Formatar resultado
             result = f"📷 [Imagem: {image_description}"
@@ -136,7 +79,7 @@ Seja específico e direto (max 150 palavras)."""
             return result
 
         except Exception as e:
-            logger.error(f"❌ Erro ao processar imagem: {e}")
+            logger.error(f"❌ Erro ao processar imagem com Gemini: {e}")
             # Fallback: retornar apenas caption
             description = "📷 [Imagem"
             if caption:

@@ -8,13 +8,11 @@ load_dotenv()
 # Configurações do Telegram
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
 
-# Configurações da API de IA
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
+# Configurações da API de IA (apenas Gemini)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
 # Debug: printar se as keys foram carregadas (sem mostrar os valores)
 print(f"[CONFIG] TELEGRAM_BOT_TOKEN: {'✅ Loaded' if TELEGRAM_BOT_TOKEN else '❌ Missing'}")
-print(f"[CONFIG] GROQ_API_KEY: {'✅ Loaded' if GROQ_API_KEY else '❌ Missing'}")
 print(f"[CONFIG] GEMINI_API_KEY: {'✅ Loaded' if GEMINI_API_KEY else '❌ Missing'}")
 
 # Configurações do banco de dados
@@ -25,17 +23,12 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # Validação
 if not TELEGRAM_BOT_TOKEN:
-    raise ValueError("TELEGRAM_BOT_TOKEN não configurado no arquivo .env")
+    raise ValueError("❌ TELEGRAM_BOT_TOKEN não configurado!")
 
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY não configurado no arquivo .env")
+if not GEMINI_API_KEY:
+    raise ValueError("❌ GEMINI_API_KEY não configurado! Obtenha em: https://aistudio.google.com/app/apikey")
 
-# Log de configuração de IAs (não obrigatório mas recomendado)
+# Log de configuração
 import logging
 logger = logging.getLogger(__name__)
-
-if GEMINI_API_KEY:
-    logger.info("✅ GEMINI_API_KEY configurada - Usando Google Gemini 1.5 Flash")
-else:
-    logger.warning("⚠️  GEMINI_API_KEY NÃO CONFIGURADA - Usando apenas Groq (limite 100k tokens/dia)")
-    logger.warning("⚠️  Obtenha sua key gratuita em: https://aistudio.google.com/app/apikey")
+logger.info("✅ GEMINI_API_KEY configurada - Bot usando Google Gemini 1.5 Flash")

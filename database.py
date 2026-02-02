@@ -66,16 +66,18 @@ class Database:
                 return [dict(row) for row in rows]
 
     async def get_messages_today(self, chat_id: int) -> List[Dict]:
-        """Recupera mensagens de hoje de um chat (do mais novo pro mais velho)"""
-        today = datetime.now().date()
+        """Recupera mensagens desde 00:00:01 de hoje (do mais novo pro mais velho)"""
+        # Pegar timestamp de hoje às 00:00:01
+        today_start = datetime.now().replace(hour=0, minute=0, second=1, microsecond=0)
+
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             async with db.execute("""
                 SELECT * FROM messages
                 WHERE chat_id = ?
-                AND DATE(timestamp) = ?
+                AND timestamp >= ?
                 ORDER BY timestamp DESC
-            """, (chat_id, today)) as cursor:
+            """, (chat_id, today_start.isoformat())) as cursor:
                 rows = await cursor.fetchall()
                 return [dict(row) for row in rows]
 
