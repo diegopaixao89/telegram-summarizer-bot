@@ -69,8 +69,8 @@ class Summarizer:
         if len(messages) > 800:
             return await self._summarize_in_chunks(messages)
 
-        # Enriquecer contexto cultural
-        cultural_context = await self.context_enricher.enrich_context(messages, max_searches=5)
+        # Enriquecer contexto cultural (aumentado para 10 para incluir mais nomes de pessoas)
+        cultural_context = await self.context_enricher.enrich_context(messages, max_searches=10)
 
         formatted_messages = self._format_messages(messages)
         top_users_context = self._get_top_users_with_context(messages, top_n=5)
@@ -81,10 +81,11 @@ REGRAS CRÍTICAS:
 - SEMPRE mencione nomes específicos de pessoas, programas, filmes, séries, empresas
 - NUNCA use termos genéricos como "programas de TV", "atores", "celebridades" sem especificar QUEM ou O QUÊ
 - Se mencionarem um programa, escreva o NOME COMPLETO do programa
-- Se mencionarem atores, escreva os NOMES dos atores
+- Se mencionarem atores/participantes, escreva os NOMES e use o CONTEXTO fornecido para explicar quem são
 - Se mencionarem produtos/marcas, escreva os NOMES das marcas
 - Cite frases exatas quando relevante (entre aspas)
 - Seja ESPECÍFICO, CONCRETO e DETALHADO
+- USE O CONTEXTO CULTURAL fornecido abaixo para adicionar informações sobre pessoas, programas e termos mencionados
 
 Analise as seguintes {len(messages)} mensagens e forneça um resumo estruturado e elaborado:
 
@@ -197,7 +198,7 @@ Foque apenas nos pontos mais importantes."""
         logger.info(f"Dividindo {len(messages)} mensagens em {len(chunks)} blocos")
 
         # Enriquecer contexto cultural (uma vez para todas as mensagens)
-        cultural_context = await self.context_enricher.enrich_context(messages, max_searches=5)
+        cultural_context = await self.context_enricher.enrich_context(messages, max_searches=10)
 
         # Resumir cada bloco
         chunk_summaries = []

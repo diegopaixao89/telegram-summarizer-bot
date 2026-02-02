@@ -104,28 +104,32 @@ Use as informações abaixo para enriquecer seu resumo quando mencionar estes te
         Extrai candidatos a termos culturais das mensagens
 
         Returns:
-            Lista de termos candidatos
+            Lista de termos candidatos com prioridade para nomes de pessoas
         """
         candidates = []
         all_text = " ".join([msg.get('text', '') for msg in messages])
 
-        # 1. Buscar padrões conhecidos
+        # 1. Buscar padrões conhecidos (programas, eventos, etc)
         for pattern in self.cultural_patterns:
             matches = re.finditer(pattern, all_text, re.IGNORECASE)
             for match in matches:
                 term = match.group(0).strip()
                 if term:
+                    # Adicionar com peso extra (repetir 2x para aumentar prioridade)
+                    candidates.append(term)
                     candidates.append(term)
 
         # 2. Buscar palavras capitalizadas que aparecem frequentemente
-        # (possíveis nomes próprios, marcas, eventos)
+        # (possíveis nomes próprios, marcas, eventos, PESSOAS)
         words = re.findall(r'\b[A-ZÀ-Ü][a-zà-ü]+\b', all_text)
         word_counts = Counter(words)
 
-        # Adicionar palavras que aparecem 3+ vezes
+        # Adicionar palavras que aparecem 2+ vezes (reduzido de 3 para pegar mais nomes)
         for word, count in word_counts.items():
-            if count >= 3 and word.lower() not in self.stop_words:
-                candidates.append(word)
+            if count >= 2 and word.lower() not in self.stop_words:
+                # Adicionar múltiplas vezes baseado na frequência (priorizar mais mencionados)
+                for _ in range(min(count, 5)):  # Max 5x para não dominar
+                    candidates.append(word)
 
         # 3. Buscar frases com padrão "X da/do Y" (ex: "Gay da shoppe")
         phrase_pattern = r'\b([A-ZÀ-Ü][a-zà-ü]+)\s+(da|do)\s+([a-zà-ü]+)\b'
@@ -133,6 +137,18 @@ Use as informações abaixo para enriquecer seu resumo quando mencionar estes te
         for match in phrase_matches:
             phrase = match.group(0)
             candidates.append(phrase)
+            candidates.append(phrase)  # Peso extra
+
+        # 4. NOVO: Buscar nomes mencionados em contexto de BBB/reality
+        # Padrões como "o Arthur", "a Milena", "do Chai"
+        reality_names_pattern = r'\b(?:o|a|do|da)\s+([A-ZÀ-Ü][a-zà-ü]+)\b'
+        reality_matches = re.finditer(reality_names_pattern, all_text)
+        for match in reality_matches:
+            name = match.group(1)
+            if name.lower() not in self.stop_words:
+                # Peso extra para nomes em contexto de reality (repetir 3x)
+                for _ in range(3):
+                    candidates.append(name)
 
         return candidates
 
@@ -181,10 +197,17 @@ Use as informações abaixo para enriquecer seu resumo quando mencionar estes te
                 # Cache expirado, remover
                 del self.cache[cache_key]
 
+        # Melhorar query para pessoas (adicionar contexto BBB se for nome próprio)
+        search_query = query
+        # Se for um nome simples (palavra única capitalizada), adicionar "BBB" para contexto
+        if query and query[0].isupper() and ' ' not in query and len(query) > 2:
+            search_query = f"{query} BBB participante"
+            logger.debug(f"Query expandida: '{query}' -> '{search_query}'")
+
         # Fazer pesquisa
         url = "https://api.duckduckgo.com/"
         params = {
-            'q': query,
+            'q': search_query,
             'format': 'json',
             'no_html': '1',
             'skip_disambig': '1'
