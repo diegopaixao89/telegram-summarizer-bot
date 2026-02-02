@@ -164,15 +164,20 @@ async def resumo_personalizado(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def resumo_rapido(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Gera resumo rápido das últimas 300 mensagens"""
+    """Gera resumo rápido das mensagens das últimas 24 horas"""
     chat_id = update.effective_chat.id
 
     processing_msg = await update.message.reply_text(
-        "⚡ Gerando resumo rápido das últimas 300 mensagens..."
+        "⚡ Gerando resumo das mensagens das últimas 24 horas..."
     )
 
     try:
-        messages = await db.get_last_n_messages(chat_id, 300)
+        # Pegar mensagens das últimas 24 horas (mais relevante que "últimas N")
+        messages = await db.get_messages_today(chat_id)
+
+        # Se não tiver mensagens de hoje, pega últimas 200
+        if not messages or len(messages) < 10:
+            messages = await db.get_last_n_messages(chat_id, 200)
 
         if not messages:
             await processing_msg.edit_text(

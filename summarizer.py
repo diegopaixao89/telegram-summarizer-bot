@@ -84,8 +84,12 @@ REGRAS CRÍTICAS:
 2. Use linguagem direta e natural - evite "indicando", "sugerindo", "demonstrando"
 3. SEMPRE contextualize pessoas mencionadas usando links/imagens compartilhados
 4. Tom profissional, sem introduções informais como "E aí, você não acompanhou"
+5. FOQUE EM EVENTOS RECENTES - Se algo é mencionado repetidamente mas parece antigo, indique isso ou omita
+6. VERIFIQUE COERÊNCIA - Não invente informações, relate apenas o que está claro nas mensagens
 
-MENSAGENS:
+PERÍODO: Mensagens recentes (últimas 24h prioritariamente)
+
+MENSAGENS (com timestamp):
 {formatted_messages}
 
 TOP USUÁRIOS:
