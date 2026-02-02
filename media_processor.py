@@ -10,25 +10,44 @@ import config
 import base64
 from groq import Groq
 import google.generativeai as genai
-from PIL import Image
-import io
+
+# Imports opcionais para Gemini Vision
+try:
+    from PIL import Image
+    import io
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
 class MediaProcessor:
     def __init__(self):
-        # Usar Gemini Vision (melhor que Groq Vision!)
-        if config.GEMINI_API_KEY:
-            genai.configure(api_key=config.GEMINI_API_KEY)
-            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
-            self.use_gemini = True
-            logger.info("✅ Gemini Vision ativo para análise de imagens")
+        logger = logging.getLogger(__name__)
+
+        # Usar Gemini Vision (melhor que Groq Vision!) se PIL estiver disponível
+        if config.GEMINI_API_KEY and PIL_AVAILABLE:
+            try:
+                genai.configure(api_key=config.GEMINI_API_KEY)
+                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+                self.use_gemini = True
+                logger.info("✅ Gemini Vision ativo para análise de imagens")
+            except Exception as e:
+                logger.error(f"❌ Erro ao inicializar Gemini Vision: {e}")
+                self.groq_client = Groq(api_key=config.GROQ_API_KEY)
+                self.vision_model = "llama-3.2-11b-vision-preview"
+                self.use_gemini = False
         else:
             # Fallback para Groq Vision
+            if not PIL_AVAILABLE:
+                logger.warning("⚠️  PIL não disponível - Usando Groq Vision")
+            if not config.GEMINI_API_KEY:
+                logger.warning("⚠️  GEMINI_API_KEY não configurada - Usando Groq Vision")
+
             self.groq_client = Groq(api_key=config.GROQ_API_KEY)
             self.vision_model = "llama-3.2-11b-vision-preview"
             self.use_gemini = False
-            logger.warning("⚠️  Usando Groq Vision (fallback) - Configure GEMINI_API_KEY para melhor qualidade")
 
     async def process_photo(self, photo_bytes: bytes, caption: str = None) -> str:
         """
