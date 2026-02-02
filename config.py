@@ -9,6 +9,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # Configurações da API de IA
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")  # Opcional - para análise de imagens
 
 # Configurações do banco de dados
 DATABASE_PATH = os.getenv("DATABASE_PATH", "./data/messages.db")

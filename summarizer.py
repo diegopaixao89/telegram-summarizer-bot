@@ -3,6 +3,7 @@ from typing import List, Dict
 from groq import Groq
 import config
 from context_enricher import ContextEnricher
+from media_processor import MediaProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,8 @@ class Summarizer:
         self.client = Groq(api_key=config.GROQ_API_KEY)
         self.model = "llama-3.3-70b-versatile"  # Modelo rápido e gratuito
         self.context_enricher = ContextEnricher()
-        logger.info("✨ Summarizer inicializado com Context Enricher v1.4.0")
+        self.media_processor = MediaProcessor()
+        logger.info("✨ Summarizer inicializado com Context Enricher v1.4.0 + Media Processor")
 
     def _format_messages(self, messages: List[Dict]) -> str:
         """Formata mensagens para o prompt"""
