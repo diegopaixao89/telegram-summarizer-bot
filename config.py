@@ -23,3 +23,13 @@ if not TELEGRAM_BOT_TOKEN:
 
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY não configurado no arquivo .env")
+
+# Log de configuração de IAs (não obrigatório mas recomendado)
+import logging
+logger = logging.getLogger(__name__)
+
+if GEMINI_API_KEY:
+    logger.info("✅ GEMINI_API_KEY configurada - Usando Google Gemini 1.5 Flash")
+else:
+    logger.warning("⚠️  GEMINI_API_KEY NÃO CONFIGURADA - Usando apenas Groq (limite 100k tokens/dia)")
+    logger.warning("⚠️  Obtenha sua key gratuita em: https://aistudio.google.com/app/apikey")

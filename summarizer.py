@@ -17,12 +17,21 @@ class Summarizer:
 
         # Google Gemini como modelo principal (melhor qualidade, gratuito)
         if config.GEMINI_API_KEY:
-            genai.configure(api_key=config.GEMINI_API_KEY)
-            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
-            logger.info("✨ Summarizer inicializado com Google Gemini 1.5 Flash (principal) + Groq (fallback)")
+            try:
+                logger.info("🔄 Configurando Google Gemini...")
+                genai.configure(api_key=config.GEMINI_API_KEY)
+                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+                logger.info("✅✅✅ GEMINI ATIVO - Usando Google Gemini 1.5 Flash como modelo principal!")
+                logger.info("✅ Groq disponível como fallback")
+            except Exception as e:
+                self.gemini_model = None
+                logger.error(f"❌ ERRO ao inicializar Gemini: {e}")
+                logger.warning("⚠️  Usando apenas Groq como fallback")
         else:
             self.gemini_model = None
-            logger.warning("⚠️  GEMINI_API_KEY não configurada, usando apenas Groq")
+            logger.error("❌❌❌ GEMINI_API_KEY NÃO ENCONTRADA!")
+            logger.error("❌ Bot vai usar apenas Groq (limite 100k tokens/dia já atingido)")
+            logger.error("❌ Configure GEMINI_API_KEY nas variáveis de ambiente!")
 
         self.context_enricher = ContextEnricher()
         self.media_processor = MediaProcessor()
