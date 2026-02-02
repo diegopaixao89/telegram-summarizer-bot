@@ -118,7 +118,7 @@ TOP USUÁRIOS E SUAS MENSAGENS (para contexto):
 {cultural_context}
 Por favor, forneça um resumo seguindo EXATAMENTE esta estrutura:
 
-📋 O QUE ACONTECEU (Lead Jornalístico)
+📋 O QUE ACONTECEU
 Em 2-3 parágrafos NATURAIS, conte a história do que aconteceu.
 - Comece respondendo: QUEM fez/disse O QUÊ?
 - Por que isso importa? Qual o contexto?
