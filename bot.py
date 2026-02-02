@@ -76,9 +76,9 @@ async def resumo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         summary = await summarizer.summarize(messages)
 
-        # Enviar resumo
-        header = f"📝 *RESUMO - Últimas {len(messages)} mensagens*\n\n"
-        await processing_msg.edit_text(header + summary, parse_mode='Markdown')
+        # Enviar resumo (sem parse_mode para evitar conflitos com caracteres especiais)
+        header = f"📝 RESUMO - Últimas {len(messages)} mensagens\n\n"
+        await processing_msg.edit_text(header + summary)
 
     except Exception as e:
         logger.error(f"Erro ao gerar resumo: {e}")
@@ -107,8 +107,8 @@ async def resumo_hoje(update: Update, context: ContextTypes.DEFAULT_TYPE):
         summary = await summarizer.summarize(messages)
 
         today = datetime.now().strftime("%d/%m/%Y")
-        header = f"📅 *RESUMO DO DIA - {today}*\n*Total: {len(messages)} mensagens*\n\n"
-        await processing_msg.edit_text(header + summary, parse_mode='Markdown')
+        header = f"📅 RESUMO DO DIA - {today}\nTotal: {len(messages)} mensagens\n\n"
+        await processing_msg.edit_text(header + summary)
 
     except Exception as e:
         logger.error(f"Erro ao gerar resumo do dia: {e}")
@@ -153,8 +153,8 @@ async def resumo_personalizado(update: Update, context: ContextTypes.DEFAULT_TYP
 
         summary = await summarizer.summarize(messages)
 
-        header = f"📝 *RESUMO PERSONALIZADO - {len(messages)} mensagens*\n\n"
-        await processing_msg.edit_text(header + summary, parse_mode='Markdown')
+        header = f"📝 RESUMO PERSONALIZADO - {len(messages)} mensagens\n\n"
+        await processing_msg.edit_text(header + summary)
 
     except Exception as e:
         logger.error(f"Erro ao gerar resumo personalizado: {e}")
@@ -182,8 +182,8 @@ async def resumo_rapido(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         summary = await summarizer.quick_summary(messages)
 
-        header = f"⚡ *RESUMO RÁPIDO - {len(messages)} mensagens*\n\n"
-        await processing_msg.edit_text(header + summary, parse_mode='Markdown')
+        header = f"⚡ RESUMO RÁPIDO - {len(messages)} mensagens\n\n"
+        await processing_msg.edit_text(header + summary)
 
     except Exception as e:
         logger.error(f"Erro ao gerar resumo rápido: {e}")
