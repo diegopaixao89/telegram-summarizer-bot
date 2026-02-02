@@ -8,36 +8,23 @@ import aiohttp
 from bs4 import BeautifulSoup
 import config
 import base64
-from anthropic import AsyncAnthropic
+from groq import Groq
 
 logger = logging.getLogger(__name__)
 
 class MediaProcessor:
     def __init__(self):
-        # Usar Claude para análise de imagens (tem visão!)
-        self.claude_client = None
-        # Tentar inicializar Claude se houver API key
-        anthropic_key = config.ANTHROPIC_API_KEY if hasattr(config, 'ANTHROPIC_API_KEY') else None
-        if anthropic_key:
-            self.claude_client = AsyncAnthropic(api_key=anthropic_key)
-            logger.info("Claude API inicializada para análise de imagens")
-        else:
-            logger.warning("ANTHROPIC_API_KEY não configurada - análise de imagens desabilitada")
+        # Usar Groq Vision (GRATUITO!) para análise de imagens
+        self.groq_client = Groq(api_key=config.GROQ_API_KEY)
+        self.vision_model = "llama-3.2-11b-vision-preview"  # Modelo de visão gratuito do Groq
+        logger.info("Groq Vision API inicializada para análise de imagens (GRATUITO)")
 
     async def process_photo(self, photo_bytes: bytes, caption: str = None) -> str:
         """
-        Processa imagem usando Claude Vision API
+        Processa imagem usando Groq Vision API (GRATUITO!)
         Retorna descrição detalhada da imagem
         """
         try:
-            # Se não tem Claude API, retornar apenas caption
-            if not self.claude_client:
-                description = "📷 [Imagem"
-                if caption:
-                    description += f": {caption}"
-                description += "]"
-                return description
-
             # Converter imagem para base64
             image_base64 = base64.b64encode(photo_bytes).decode('utf-8')
 
@@ -50,39 +37,42 @@ class MediaProcessor:
             elif photo_bytes[:4] == b'RIFF':
                 media_type = "image/webp"
 
-            # Usar Claude para analisar a imagem
-            prompt = """Analise esta imagem e descreva:
+            # Usar Groq Vision para analisar a imagem
+            prompt = """Analise esta imagem em português e descreva:
 1. O que você vê (pessoas, objetos, texto, memes)
-2. Contexto (é um print de tweet? post? meme? foto?)
-3. Se há texto na imagem, transcreva-o
-4. Qual o assunto principal
+2. Contexto (é um print de tweet? post? meme? foto? notícia?)
+3. Se há texto na imagem, transcreva-o EXATAMENTE
+4. Qual o assunto principal e tema
+5. Se for relacionado a BBB ou reality show, mencione
 
-Seja conciso mas específico (max 200 palavras)."""
+Seja conciso mas específico (max 150 palavras)."""
 
-            response = await self.claude_client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=500,
+            # Criar data URL para Groq
+            image_url = f"data:{media_type};base64,{image_base64}"
+
+            response = self.groq_client.chat.completions.create(
+                model=self.vision_model,
                 messages=[{
                     "role": "user",
                     "content": [
                         {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": media_type,
-                                "data": image_base64
-                            }
-                        },
-                        {
                             "type": "text",
                             "text": prompt
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_url
+                            }
                         }
                     ]
-                }]
+                }],
+                temperature=0.3,
+                max_tokens=400
             )
 
             # Extrair descrição
-            image_description = response.content[0].text
+            image_description = response.choices[0].message.content
 
             # Formatar resultado
             result = f"📷 [Imagem: {image_description}"
@@ -90,11 +80,12 @@ Seja conciso mas específico (max 200 palavras)."""
                 result += f" | Legenda: {caption}"
             result += "]"
 
-            logger.info(f"Imagem analisada com Claude: {len(photo_bytes)} bytes")
+            logger.info(f"Imagem analisada com Groq Vision (gratuito): {len(photo_bytes)} bytes")
             return result
 
         except Exception as e:
-            logger.error(f"Erro ao processar imagem: {e}")
+            logger.error(f"Erro ao processar imagem com Groq Vision: {e}")
+            # Fallback: retornar apenas caption
             description = "📷 [Imagem"
             if caption:
                 description += f": {caption}"
