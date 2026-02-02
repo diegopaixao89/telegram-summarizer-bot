@@ -1,6 +1,7 @@
 import logging
 from typing import List, Dict
 from groq import Groq
+import google.generativeai as genai
 import config
 from context_enricher import ContextEnricher
 from media_processor import MediaProcessor
@@ -10,11 +11,22 @@ logger = logging.getLogger(__name__)
 
 class Summarizer:
     def __init__(self):
-        self.client = Groq(api_key=config.GROQ_API_KEY)
-        self.model = "llama-3.3-70b-versatile"  # Modelo rápido e gratuito
+        # Groq para fallback e análise de imagens
+        self.groq_client = Groq(api_key=config.GROQ_API_KEY)
+        self.groq_model = "llama-3.3-70b-versatile"
+
+        # Google Gemini como modelo principal (melhor qualidade, gratuito)
+        if config.GEMINI_API_KEY:
+            genai.configure(api_key=config.GEMINI_API_KEY)
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+            logger.info("✨ Summarizer inicializado com Google Gemini 1.5 Flash (principal) + Groq (fallback)")
+        else:
+            self.gemini_model = None
+            logger.warning("⚠️  GEMINI_API_KEY não configurada, usando apenas Groq")
+
         self.context_enricher = ContextEnricher()
         self.media_processor = MediaProcessor()
-        logger.info("✨ Summarizer inicializado com Context Enricher v1.4.0 + Media Processor")
+        logger.info("✨ Context Enricher v1.4.0 + Media Processor ativos")
 
     def _format_messages(self, messages: List[Dict]) -> str:
         """Formata mensagens para o prompt"""
@@ -128,8 +140,44 @@ Máximo 3-5 citações textuais importantes:
 Liste apenas links importantes com descrição breve. Se não houver, omita esta seção."""
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
+            # Tentar com Gemini primeiro (melhor qualidade)
+            if self.gemini_model:
+                try:
+                    logger.info("Gerando resumo com Google Gemini 1.5 Flash...")
+                    full_prompt = f"""Você é um jornalista profissional criando resumos objetivos de conversas.
+
+ESTILO:
+- Direto e sintético - sem redundâncias
+- Tom profissional, não coloquial demais
+- Contextualize nomes usando informações disponíveis
+- Cada seção deve ter informação NOVA, não repetir o que já foi dito
+- Evite termos vagos: seja específico com nomes, datas, eventos
+
+---
+
+{prompt}"""
+
+                    response = self.gemini_model.generate_content(
+                        full_prompt,
+                        generation_config=genai.types.GenerationConfig(
+                            temperature=0.3,
+                            max_output_tokens=6000,
+                        )
+                    )
+
+                    summary = response.text
+                    logger.info(f"✅ Resumo gerado com Gemini para {len(messages)} mensagens")
+                    return summary
+
+                except Exception as e:
+                    logger.warning(f"⚠️  Erro com Gemini, tentando Groq: {e}")
+                    # Fallback para Groq
+                    pass
+
+            # Fallback: usar Groq
+            logger.info("Gerando resumo com Groq (fallback)...")
+            response = self.groq_client.chat.completions.create(
+                model=self.groq_model,
                 messages=[
                     {
                         "role": "system",
@@ -152,11 +200,11 @@ ESTILO:
             )
 
             summary = response.choices[0].message.content
-            logger.info(f"Resumo gerado com sucesso para {len(messages)} mensagens")
+            logger.info(f"✅ Resumo gerado com Groq para {len(messages)} mensagens")
             return summary
 
         except Exception as e:
-            logger.error(f"Erro ao gerar resumo: {e}")
+            logger.error(f"❌ Erro ao gerar resumo: {e}")
             return f"❌ Erro ao gerar resumo: {str(e)}"
 
     async def quick_summary(self, messages: List[Dict]) -> str:
@@ -173,8 +221,23 @@ ESTILO:
 Foque apenas nos pontos mais importantes."""
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
+            # Tentar Gemini primeiro
+            if self.gemini_model:
+                try:
+                    response = self.gemini_model.generate_content(
+                        prompt,
+                        generation_config=genai.types.GenerationConfig(
+                            temperature=0.3,
+                            max_output_tokens=500,
+                        )
+                    )
+                    return response.text
+                except Exception as e:
+                    logger.warning(f"Erro com Gemini no quick_summary, usando Groq: {e}")
+
+            # Fallback Groq
+            response = self.groq_client.chat.completions.create(
+                model=self.groq_model,
                 messages=[
                     {"role": "user", "content": prompt}
                 ],
@@ -214,14 +277,31 @@ MENSAGENS:
 Seja conciso mas completo."""
 
             try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
+                # Tentar Gemini primeiro
+                if self.gemini_model:
+                    try:
+                        response = self.gemini_model.generate_content(
+                            prompt,
+                            generation_config=genai.types.GenerationConfig(
+                                temperature=0.3,
+                                max_output_tokens=800,
+                            )
+                        )
+                        chunk_summaries.append(f"**Bloco {i}:** {response.text}")
+                        logger.info(f"Bloco {i}/{len(chunks)} resumido com Gemini")
+                        continue
+                    except Exception as e:
+                        logger.warning(f"Erro com Gemini no bloco {i}, usando Groq: {e}")
+
+                # Fallback Groq
+                response = self.groq_client.chat.completions.create(
+                    model=self.groq_model,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.3,
                     max_tokens=800
                 )
                 chunk_summaries.append(f"**Bloco {i}:** {response.choices[0].message.content}")
-                logger.info(f"Bloco {i}/{len(chunks)} resumido")
+                logger.info(f"Bloco {i}/{len(chunks)} resumido com Groq")
             except Exception as e:
                 logger.error(f"Erro ao resumir bloco {i}: {e}")
                 chunk_summaries.append(f"**Bloco {i}:** Erro ao processar")
@@ -272,14 +352,30 @@ Links importantes com descrição. Omita se não houver.
 Total: {len(messages)} mensagens"""
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
+            # Tentar Gemini primeiro
+            if self.gemini_model:
+                try:
+                    response = self.gemini_model.generate_content(
+                        final_prompt,
+                        generation_config=genai.types.GenerationConfig(
+                            temperature=0.3,
+                            max_output_tokens=5000,
+                        )
+                    )
+                    logger.info(f"✅ Resumo final gerado com Gemini para {len(messages)} mensagens")
+                    return response.text
+                except Exception as e:
+                    logger.warning(f"⚠️  Erro com Gemini no resumo final, usando Groq: {e}")
+
+            # Fallback Groq
+            response = self.groq_client.chat.completions.create(
+                model=self.groq_model,
                 messages=[{"role": "user", "content": final_prompt}],
                 temperature=0.3,
                 max_tokens=5000
             )
-            logger.info(f"Resumo final gerado para {len(messages)} mensagens")
+            logger.info(f"✅ Resumo final gerado com Groq para {len(messages)} mensagens")
             return response.choices[0].message.content
         except Exception as e:
-            logger.error(f"Erro ao gerar resumo final: {e}")
+            logger.error(f"❌ Erro ao gerar resumo final: {e}")
             return f"❌ Erro ao gerar resumo final: {str(e)}\n\nResumos parciais:\n{combined}"
