@@ -35,8 +35,8 @@ class MediaProcessor:
 
         try:
             genai.configure(api_key=config.GEMINI_API_KEY)
-            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
-            logger.info("✅ Gemini Vision ativo para análise de imagens")
+            self.gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+            logger.info("✅ Gemini 2.5 Flash Vision ativo para análise de imagens")
         except Exception as e:
             logger.error(f"❌ Erro CRÍTICO ao inicializar Gemini Vision: {e}")
             raise

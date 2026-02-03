@@ -15,10 +15,10 @@ class Summarizer:
             raise ValueError("❌ GEMINI_API_KEY é OBRIGATÓRIA! Configure nas variáveis de ambiente.")
 
         try:
-            logger.info("🔄 Configurando Google Gemini 1.5 Flash...")
+            logger.info("🔄 Configurando Google Gemini 2.5 Flash...")
             genai.configure(api_key=config.GEMINI_API_KEY)
-            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
-            logger.info("✅✅✅ GEMINI ATIVO - Modelo único para todos os resumos!")
+            self.gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+            logger.info("✅✅✅ GEMINI 2.5 FLASH ATIVO - Modelo único para todos os resumos!")
         except Exception as e:
             logger.error(f"❌ ERRO CRÍTICO ao inicializar Gemini: {e}")
             raise
