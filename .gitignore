@@ -1,31 +1,16 @@
-# Environment variables
 .env
-CREDENCIAIS.md
-
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+*.pyc
 venv/
-env/
-ENV/
-
-# Database
 data/
-*.db
-*.db-journal
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Docker
-docker-compose.override.yml
+bot.log
+messages_backup.json
+*.md
+!README.md
+SESSAO_*.md
+RESUMO_*.md
+HISTORICO_*.md
+CHANGELOG.md
+DEPLOY_*.md
+GUIA_*.md
+TESTE_*.md
