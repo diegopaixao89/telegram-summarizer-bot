@@ -1,9 +1,16 @@
-# 🤖 Resumildo - Bot de Resumos do Telegram
+# Resumildo — Bot de Resumos do Telegram
 
-Bot inteligente para Telegram que coleta mensagens de grupos e gera resumos elaborados usando IA.
+Bot inteligente para Telegram que coleta mensagens de grupos e gera resumos elaborados usando IA (Groq / LLaMA 3.3 70B).
 
-**Status:** ✅ Em produção no Koyeb (24/7)
-**Bot:** [@resumildobot](https://t.me/resumildobot)
+**Status:** Em produção no Koyeb (24/7) | **Bot:** [@resumildobot](https://t.me/resumildobot)
+
+---
+
+## Screenshot
+
+> Exemplo de resumo gerado pelo `/resumo` em um grupo ativo
+
+![Exemplo de resumo](docs/screenshots/resumo-exemplo.png)
 
 ---
 
