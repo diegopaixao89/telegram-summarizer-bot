@@ -300,12 +300,10 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def post_init(application: Application):
     """Inicialização após o bot estar pronto"""
-    # Criar diretório data se não existir
-    os.makedirs('./data', exist_ok=True)
-
-    # Inicializar banco de dados
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    os.makedirs(data_dir, exist_ok=True)
     await db.initialize()
-    logger.info("Bot inicializado com sucesso!")
+    logger.info("Bot inicializado com sucesso! DB: %s", data_dir)
 
 
 RENDER_URL = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
