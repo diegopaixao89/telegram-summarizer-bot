@@ -308,26 +308,69 @@ async def post_init(application: Application):
     logger.info("Bot inicializado com sucesso!")
 
 
+RENDER_URL = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
+PORT = int(os.environ.get("PORT", 8080))
+
+
+def _build_application() -> Application:
+    app = Application.builder().token(config.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("stats", stats))
+    app.add_handler(CommandHandler("debug", debug))
+    app.add_handler(CommandHandler("resumo", resumo))
+    app.add_handler(CommandHandler("resumo_hoje", resumo_hoje))
+    app.add_handler(CommandHandler("resumo_personalizado", resumo_personalizado))
+    app.add_handler(CommandHandler("resumo_rapido", resumo_rapido))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_message))
+    return app
+
+
+# ---------------------------------------------------------------------------
+# Modo webhook (Render)
+# ---------------------------------------------------------------------------
+
+if RENDER_URL:
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI, Request, Response
+
+    _ptb: Application | None = None
+
+    @asynccontextmanager
+    async def _lifespan(app):
+        global _ptb
+        _ptb = _build_application()
+        await _ptb.initialize()
+        await _ptb.bot.set_webhook(f"{RENDER_URL}/webhook")
+        await _ptb.start()
+        yield
+        await _ptb.stop()
+        await _ptb.shutdown()
+
+    fastapi_app = FastAPI(lifespan=_lifespan)
+
+    @fastapi_app.api_route("/", methods=["GET", "HEAD"])
+    async def health():
+        return {"status": "ok", "mode": "webhook"}
+
+    @fastapi_app.post("/webhook")
+    async def telegram_webhook(request: Request):
+        body = await request.json()
+        await _ptb.process_update(Update.de_json(body, _ptb.bot))
+        return Response(status_code=200)
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
 def main():
-    """Função principal"""
-    # Criar aplicação
-    application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
-
-    # Registrar handlers de comandos
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("stats", stats))
-    application.add_handler(CommandHandler("debug", debug))
-    application.add_handler(CommandHandler("resumo", resumo))
-    application.add_handler(CommandHandler("resumo_hoje", resumo_hoje))
-    application.add_handler(CommandHandler("resumo_personalizado", resumo_personalizado))
-    application.add_handler(CommandHandler("resumo_rapido", resumo_rapido))
-
-    # Registrar handler para salvar todas as mensagens
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_message))
-
-    # Iniciar bot
-    logger.info("Iniciando bot...")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    if RENDER_URL:
+        import uvicorn
+        logger.info("Iniciando em modo webhook na porta %d", PORT)
+        uvicorn.run(fastapi_app, host="0.0.0.0", port=PORT)
+    else:
+        logger.info("Iniciando em modo polling")
+        _build_application().run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":

@@ -1,15 +1,19 @@
 services:
   - type: web
-    name: telegram-summarizer-bot
-    env: docker
+    name: resumildo-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
     plan: free
     healthCheckPath: /
     envVars:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
-      - key: GROQ_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
-      - key: DATABASE_PATH
-        value: ./data/messages.db
+      - key: PYTHON_VERSION
+        value: "3.13.3"
       - key: LOG_LEVEL
-        value: INFO
+        value: "INFO"
+      - key: DATABASE_PATH
+        value: "./data/messages.db"
