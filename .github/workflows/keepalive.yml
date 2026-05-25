@@ -12,3 +12,4 @@ jobs:
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://resumildo-bot.onrender.com)
           echo "Status: $STATUS"
+          echo "Status: $STATUS"
